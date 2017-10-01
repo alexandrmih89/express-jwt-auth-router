@@ -65,3 +65,7 @@ app.get('/orders', acl.can('orders:get'), (req, res, next) => {
     res.send('OK!');
 })
 ```
+
+User data (request):
+
+To create a user with role need to use acl and set the roles in registerQuery and fbCreateUser.

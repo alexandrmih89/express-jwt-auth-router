@@ -3,7 +3,6 @@ import bcrypt from 'bcrypt';
 import HttpErrors from 'http-errors';
 
 export default (db, acl, customize = () => {}) => {
-  //TODO: errors compartible with redux-form???
   //TODO: errors translation
   const PasswordIncorrect = () => HttpErrors.Unauthorized("Password Incorrect");
   const UserNotFound = () => HttpErrors.NotFound("User not found");
@@ -64,9 +63,10 @@ export default (db, acl, customize = () => {}) => {
         throw AlreadyTaken();
       }
       return User.create(reqUser)
-      //TODO: role by default
         .then(user => {
           //TODO: it should be a promise
+          //TODO: add multiple roles from
+          //TODO: set role by default
           acl.addUserRolesPromise(user.id, 'user');
           return user;
         });
