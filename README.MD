@@ -41,10 +41,13 @@ import anyOtherRouter from './api';
 import server from 'express-jwt-auth-router'
 
 const { app, startServer } = server(db, {
-  loginQuery: User.login,
-  registerQuery: User.register,
-  mountPoint: '/api/v1' //optional
+  loginQuery: User.login, //a function accepting User (from request) and returning a promise (usually db call) which should return User or throw error
+  registerQuery: User.register, // a function accepting User and returning a promise (usually db call), to check if user exists, and then refister if not. Should return User or throw error
+  fbUserQuery: User.checkFBUser, // accepts fbProfile._json, returns a Promise with user formatted (usually db call), or null if nothing found. Should omit password and other sensitive data.
+  fbCreateUser User.createFBUser, // creates FB profile user
   apiRouter //optional, will be mounted at mount point
+  mountPoint: '/api/v1' //optional - route to mount
+  fbProfileFields, //  facebook profile fields. By default: [ 'id', 'email', 'displayName', 'gender', 'picture', 'age_range', 'cover', 'link', 'locale', 'timezone', 'updated_time', 'verified']
 });
 
 app.use(anyOtherRouter); //do whatever you want with your express app
