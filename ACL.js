@@ -9,8 +9,6 @@ export default (db) => {
 
   let acl = new ACL(new SequelizeBackend(db, tablePrefix, aclOptions));
 
-  //const addUserRoles = acl.addUserRoles;
-
   acl.addUserRolesPromise = (userId, roles) => {
     return new Promise((resolve, reject) => {
       acl.addUserRoles(userId, roles, (err) => {
