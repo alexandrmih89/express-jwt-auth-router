@@ -65,7 +65,11 @@ export default (db, acl, customize = () => {}) => {
       }
       return User.create(reqUser)
       //TODO: role by default
-        .then(user => acl.addUserRolesPromise(user.id, 'user').then(() => user));
+        .then(user => {
+          //TODO: it should be a promise
+          acl.addUserRolesPromise(user.id, 'user');
+          return user;
+        });
     });
 
   User.prototype.validatePassword = function (password) {

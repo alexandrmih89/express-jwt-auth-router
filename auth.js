@@ -40,7 +40,7 @@ export const generateAccessToken = (req, res, next) => {
   req.accessToken = jwt.sign({
     id: req.user.id,
   }, jwtSecret, {
-    expiresIn: 60
+    expiresIn: 300
   });
   next();
 };
@@ -108,7 +108,6 @@ export const applyStrategies = (passport, {
 export const authenticate = (passport) => (strategy) => passport.authenticate(strategy, { session: false });
 
 export const isAuthenticated = (req, res, next) => {
-  console.log(req.body);
   //TODO: check if token does not expire, then reject, cause it's a refreshToken
   //TODO: serialize user???
   authenticateJWT(req, res, (err) => {

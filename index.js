@@ -18,35 +18,10 @@ app.use(passport.initialize());
 
 const port = parseInt(process.env.PORT, 10) || 3000;
 
-const setupHandlers = (router) => {
-  /*** result handler ***/
-  router.use((req, res, next) => {
-    res.json(res.result);
-  });
+const setupErrorHandlers = (router) => {
 
   /*** error handlers ***/
-  router.use((err, req, res, next) => {
-    console.log(ValidationError);
-    if (err instanceof ValidationError) {
-      err.statusCode = 400;
-    }
-    next(err);
-  });
 
-  router.use((err, req, res, next) => {
-    if (err) {
-      const status = err.statusCode || 500;
-      res
-        .status(status)
-        .json({
-          ...err,
-          message: err.message,
-          type: err.name,
-          status,
-        });
-    }
-    next();
-  });
 };
 
 export default (db, opts) => {
@@ -73,10 +48,47 @@ export default (db, opts) => {
 
   const auth = authRouter(passport);
 
-  app.use(mountPoint, auth, apiRouter);
+  app.use(mountPoint, auth);
+  app.use(mountPoint, apiRouter);
+
+  /*** result handler must match the same routes
+   * unlike error handlers (see below)
+   ***/
+  app.use(mountPoint, (req, res, next) => {
+    res.json(res.result);
+  });
+
+  /***
+   * error handlers go after matched routes
+   * if routes after are matched
+   * errors before are skipped
+   ***/
+  app.use((err, req, res, next) => {
+    if (err instanceof ValidationError) {
+      err.statusCode = 400;
+    }
+    next(err);
+  });
+
+  app.use((err, req, res, next) => {
+    if (err) {
+      const status = err.statusCode || 500;
+      res
+        .status(status)
+        .json({
+          ...err,
+          message: err.message,
+          type: err.name,
+          status,
+        });
+    }
+    next();
+  });
 
   //apply to the latest router, otherwise latter will not work
-  setupHandlers(apiRouter);
+  //setupHandlers(auth);
+
+  setupErrorHandlers(apiRouter);
 
   return {
     app,
