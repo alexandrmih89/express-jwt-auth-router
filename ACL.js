@@ -12,15 +12,11 @@ export default (db) => {
   //const addUserRoles = acl.addUserRoles;
 
   acl.addUserRolesPromise = (userId, roles) => {
-    console.log('enterign promise');
     return new Promise((resolve, reject) => {
-      console.log('Before add user roles');
       acl.addUserRoles(userId, roles, (err) => {
         if(err) {
-          console.log(err);
           reject(err);
         } else {
-          console.log('resolved');
           resolve();
         }
       })
