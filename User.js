@@ -22,16 +22,6 @@ export default (db, acl, customize = () => {}) => {
       validate: {
         notEmpty: true
       }
-    },
-    name: {
-      type: Sequelize.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true
-      }
-    },
-    address: {
-      type: Sequelize.STRING
     }
   }, {
     hooks: {
@@ -59,6 +49,26 @@ export default (db, acl, customize = () => {}) => {
       validate: {
         notEmpty: true
       }
+    }
+  });
+
+  const Contact = db.define('Contact', {
+    kind: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    contact: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    type: {
+      type: Sequelize.STRING,
     }
   });
 
@@ -111,6 +121,7 @@ export default (db, acl, customize = () => {}) => {
     };
   };
 
+  User.hasMany(Contact, { as: 'contacts' });
   User.belongsToMany(Role, { as: 'roles', through: 'UserRoles' });
 
   customize(User);
