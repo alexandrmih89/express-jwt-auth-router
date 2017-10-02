@@ -34,6 +34,7 @@ export default (db, acl, customize = () => {}) => {
   const Role = db.define('Role', {
     role: {
       type: Sequelize.STRING,
+      primaryKey: true,
       allowNull: false,
       validate: {
         notEmpty: true
