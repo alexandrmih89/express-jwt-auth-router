@@ -36,9 +36,10 @@ const signup = (registerQuery) => (req, username, password, done) => {
 };
 
 export const generateAccessToken = (req, res, next) => {
-  //TODO: revoke accessTokens
+  //TODO: revoke accessTokens - need to remember all generated tokens and check them in isAuthenticated
   req.accessToken = jwt.sign({
     id: req.user.id,
+    provider: req.user.provider
   }, jwtSecret, {
     expiresIn: 300
   });
@@ -51,6 +52,7 @@ export const generateRefreshToken = (req, res, next) => {
   req.refreshToken = jwt.sign({
     id: req.user.id,
     session: req.user.id,
+    provider: req.user.provider
   }, jwtSecret);
   next();
 };
