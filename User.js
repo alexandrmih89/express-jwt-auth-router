@@ -21,8 +21,7 @@ export default (db, acl, customize = () => {}) => {
       allowNull: false,
       validate: {
         notEmpty: true
-      },
-      roles: false
+      }
     },
     name: {
       type: Sequelize.STRING,
@@ -41,6 +40,29 @@ export default (db, acl, customize = () => {}) => {
       }
     }
   });
+
+  const Role = db.define('Role', {
+    role: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    }
+  });
+
+  const Permission = db.define('Permission', {
+    permission: {
+      type: Sequelize.STRING,
+      primaryKey: true,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    }
+  });
+
+  Role.belongsToMany(Permission, { as: 'permissions', through: 'RolesPermissions' });
 
   User.findByUsername = (username) => User.findAll({
     where: {username},
@@ -67,6 +89,7 @@ export default (db, acl, customize = () => {}) => {
           //TODO: it should be a promise
           //TODO: add multiple roles from
           //TODO: set role by default
+          user.addRoles(1);
           acl.addUserRolesPromise(user.id, 'user');
           return user;
         });
@@ -79,11 +102,16 @@ export default (db, acl, customize = () => {}) => {
   };
 
   User.prototype.toJSON = function () {
+    const user = this.get();
     return {
-      ...this.get(),
-      password: undefined
+      ...user,
+      //TODO: optimize query?
+      roles: user.roles.map(({ role }) => role ),
+      password: undefined,
     };
   };
+
+  User.belongsToMany(Role, { as: 'roles', through: 'UserRoles' });
 
   customize(User);
 
