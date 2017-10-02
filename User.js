@@ -73,6 +73,23 @@ export default (db, acl, customize = () => {}) => {
     }
   });
 
+  const Provider = db.define('Provider', {
+    type: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    },
+    id: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    }
+  });
+
   Role.belongsToMany(Permission, { as: 'permissions', through: 'RolesPermissions' });
 
   User.findByUsername = (username) => User.findAll({
@@ -119,10 +136,12 @@ export default (db, acl, customize = () => {}) => {
       //TODO: optimize query?
       roles: user.roles.map(({ role }) => role ),
       password: undefined,
+      authProviders: undefined
     };
   };
 
   User.hasMany(Contact, { as: 'contacts' });
+  User.hasMany(Provider, { as: 'authProviders' });
   User.belongsToMany(Role, { as: 'roles', through: 'UserRoles' });
 
   customize(User);
