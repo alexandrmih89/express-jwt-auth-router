@@ -1,3 +1,5 @@
+import HttpError from 'http-errors';
+
 export default (Model, {
   perPage
 } = {}) => ({
@@ -16,6 +18,9 @@ export default (Model, {
       }
     })
       .then(item => {
+        if(!item) {
+          throw new HttpError.NotFound("Not found")
+        }
         res.result = item;
         next();
       })
