@@ -8,7 +8,7 @@ export default (db, acl, customize = () => {}) => {
   const UserNotFound = () => HttpErrors.NotFound("User not found");
   const AlreadyTaken = () => HttpErrors.Forbidden("Username is already taken");
 
-  const User = db.define('User', {
+  const User = db.define('user', {
     username: {
       type: Sequelize.STRING,
       allowNull: false,
@@ -28,10 +28,11 @@ export default (db, acl, customize = () => {}) => {
       beforeValidate: function (user) {
         user.password = bcrypt.hashSync(user.password, 10);
       }
-    }
-  }, { paranoid: true });
+    },
+    paranoid: true
+  });
 
-  const Role = db.define('Role', {
+  const Role = db.define('role', {
     role: {
       type: Sequelize.STRING,
       primaryKey: true,
@@ -42,7 +43,7 @@ export default (db, acl, customize = () => {}) => {
     }
   }, { paranoid: true });
 
-  const Permission = db.define('Permission', {
+  const Permission = db.define('permission', {
     permission: {
       type: Sequelize.STRING,
       primaryKey: true,
@@ -53,7 +54,7 @@ export default (db, acl, customize = () => {}) => {
     }
   }, { paranoid: true });
 
-  const Contact = db.define('Contact', {
+  const Contact = db.define('contact', {
     kind: {
       type: Sequelize.STRING,
       allowNull: false,
@@ -73,15 +74,8 @@ export default (db, acl, customize = () => {}) => {
     }
   }, { paranoid: true });
 
-  const Provider = db.define('Provider', {
+  const Provider = db.define('provider', {
     type: {
-      type: Sequelize.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true
-      }
-    },
-    id: {
       type: Sequelize.STRING,
       allowNull: false,
       validate: {
@@ -90,7 +84,20 @@ export default (db, acl, customize = () => {}) => {
     }
   }, { paranoid: true });
 
-  Role.belongsToMany(Permission, { as: 'permissions', through: 'RolesPermissions' });
+  const UserProvider = db.define('user_provider', {
+    identifier: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      //unique: true, //TODO: composite PK???
+      validate: {
+        notEmpty: true
+      }
+    }
+  });
+
+  UserProvider.belongsTo(Provider);
+
+  Role.belongsToMany(Permission, { as: 'permissions', through: 'roles_permissions' });
 
   User.findByUsername = (username) => User.findAll({
     where: {username},
@@ -141,8 +148,8 @@ export default (db, acl, customize = () => {}) => {
   };
 
   User.hasMany(Contact, { as: 'contacts' });
-  User.hasMany(Provider, { as: 'authProviders' });
-  User.belongsToMany(Role, { as: 'roles', through: 'UserRoles' });
+  User.hasMany(UserProvider, { as: 'authProviders' });
+  User.belongsToMany(Role, { as: 'roles', through: 'user_roles' });
 
   customize(User);
 
