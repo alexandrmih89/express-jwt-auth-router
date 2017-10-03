@@ -11,10 +11,35 @@ export default (Model, {
       })
       .catch(next);
   },
+  findAllWhere: (where = {}) => (req, res, next) => {
+    Model.findAll(where(req))
+      .then(items => {
+        res.result = items;
+        next();
+      })
+      .catch(next);
+  },
   findOne: (req, res, next) => {
     Model.findOne({
       where: {
         id: req.params.id
+      }
+    })
+      .then(item => {
+        if(!item) {
+          throw new HttpError.NotFound("Not found")
+        }
+        res.result = item;
+        next();
+      })
+      .catch(next);
+  },
+  findOneWhere: (where) => (req, res, next) => {
+    const w = where(req);
+    Model.findOne({
+      where: {
+        id: req.params.id,
+        ...w
       }
     })
       .then(item => {
