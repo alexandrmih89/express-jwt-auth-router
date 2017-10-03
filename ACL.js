@@ -52,5 +52,18 @@ export default (db) => {
       });
     }]);
 
+  acl.canSkipMiddleware = (permission, when = () => true) =>
+    combine([isAuthenticated, (req, res, next) => {
+      const p = permission.split(":");
+      acl.isAllowed(req.user.id, p[0], p[1], (err, allowed) => {
+        if (allowed && when(req, res)) {
+          next();
+        } else {
+          next('route');
+        }
+      });
+    }]);
+
+
   return acl;
 }
