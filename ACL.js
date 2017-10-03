@@ -38,6 +38,8 @@ export default (db) => {
     })
   };
 
+  acl.isAuthenticated = isAuthenticated;
+
   acl.canMiddleware = (permission, when = () => true) =>
     combine([isAuthenticated, (req, res, next) => {
       const p = permission.split(":");
