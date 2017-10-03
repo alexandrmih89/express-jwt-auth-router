@@ -59,9 +59,9 @@ Use ACL:
 ```
 import acl from './acl';
 
-acl.allow('user', 'orders', 'get');
+acl.allowPromise('user', 'orders', 'get');
 
-app.get('/orders', acl.can('orders:get'), (req, res, next) => {
+app.get('/orders', acl.canMiddleware('orders:get'), (req, res, next) => {
     res.send('OK!');
 })
 ```
