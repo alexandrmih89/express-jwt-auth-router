@@ -29,7 +29,7 @@ export default (db, acl, customize = () => {}) => {
         user.password = bcrypt.hashSync(user.password, 10);
       }
     }
-  });
+  }, { paranoid: true });
 
   const Role = db.define('Role', {
     role: {
@@ -40,7 +40,7 @@ export default (db, acl, customize = () => {}) => {
         notEmpty: true
       }
     }
-  });
+  }, { paranoid: true });
 
   const Permission = db.define('Permission', {
     permission: {
@@ -51,7 +51,7 @@ export default (db, acl, customize = () => {}) => {
         notEmpty: true
       }
     }
-  });
+  }, { paranoid: true });
 
   const Contact = db.define('Contact', {
     kind: {
@@ -71,7 +71,7 @@ export default (db, acl, customize = () => {}) => {
     type: {
       type: Sequelize.STRING,
     }
-  });
+  }, { paranoid: true });
 
   const Provider = db.define('Provider', {
     type: {
@@ -88,7 +88,7 @@ export default (db, acl, customize = () => {}) => {
         notEmpty: true
       }
     }
-  });
+  }, { paranoid: true });
 
   Role.belongsToMany(Permission, { as: 'permissions', through: 'RolesPermissions' });
 
