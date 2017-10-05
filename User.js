@@ -41,14 +41,12 @@ export default (db, acl, customize = () => {}) => {
     },
     defaultScope: {
       include: [{
-        all: true
-      }]
-    },
-    userScope: {
-      include: [{
         model: Role,
         as: 'roles'
       }]
+    },
+    userScope: {
+
     }
   });
 
@@ -108,13 +106,7 @@ export default (db, acl, customize = () => {}) => {
 
   Role.belongsToMany(Permission, { as: 'permissions', through: 'roles_permissions' });
 
-  User.findByUsername = (username) => User.findOne({
-    where: { username }
-  })
-    .then(user => {
-      console.log(user);
-      return user
-    });
+  User.findByUsername = (username) => User.findOne({ where: { username }});
 
   User.login = (reqUser) => User.findByUsername(reqUser.username)
     .then(user => {
@@ -152,25 +144,30 @@ export default (db, acl, customize = () => {}) => {
     }]
   });
 
-  User.facebookCreate = (fbProfile, facebookRole = 'user') => {
+  User.facebookCreate = (fbProfile, req, facebookRole = 'user') => {
     return User.create({
       username: fbProfile.email || fbProfile.emails[0]
     })
     //TODO: optimize - load providers at application start?
-      .then(user =>
-        Provider.findOne({ where: { type: 'facebook' } })
-          .then(provider =>
-            UserProvider.create({ identifier: fbProfile.id })
-              .then(authProvider => {
-                acl.addUserRolesPromise(user.id, facebookRole);
-                return Promise.all([
-                  authProvider.setProvider(provider),
-                  user.addAuthProvider(authProvider),
-                  user.addRole(facebookRole)
-                ]);
-              }))
-          .then(user => User.findById(user.id))
-      );
+      .then(user => Provider.findOne({where: { type: 'facebook' }})
+        .then(provider =>
+          UserProvider.create({identifier: fbProfile.id})
+            .then(authProvider => {
+              acl.addUserRolesPromise(user.id, facebookRole);
+              return Promise.all([
+                authProvider.setProvider(provider),
+                user.addAuthProvider(authProvider),
+                user.addRole(facebookRole)
+              ]);
+            }))
+        .then(() => User.findById(user.id)));
+  };
+
+  User.prototype.createContact = function(kind, contact, type) {
+    return Contact.create({ kind, contact, type })
+      .then((contact) => {
+        this.addContact(contact)
+      });
   };
 
   User.prototype.validatePassword = function (password) {
@@ -196,7 +193,14 @@ export default (db, acl, customize = () => {}) => {
   User.hasMany(UserProvider, { as: 'authProviders' });
   User.belongsToMany(Role, { as: 'roles', through: 'user_roles' });
 
-  const exports = { User, Role };
+  const exports = {
+    User,
+    Role,
+    Contact,
+    Permission,
+    UserProvider,
+    Provider
+  };
 
   customize(exports);
 

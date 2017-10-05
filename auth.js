@@ -65,18 +65,16 @@ const facebookStrategy = (profileFields, fbUserQuery, fbCreateUser) => {
       profileFields,
       passReqToCallback: true
     }, (req, facebookAccessToken, facebookRefreshToken, fbProfile, done) => {
-      fbUserQuery(fbProfile._json)
+      fbUserQuery(fbProfile._json, req)
         .then(user => {
           if (user) {
-            return user;
+            return user.toJSON();
           }
-          return fbCreateUser(fbProfile._json)
-            .then(user => {
-              console.log({ ...user.toJSON(), firstLogin: true });
-            });
+          return fbCreateUser(fbProfile._json, req)
+            .then(user => ({ ...user.toJSON(), firstLogin: true }));
         })
         .then(user => {
-          done(null, { ...user.toJSON(), provider: 'facebook' });
+          done(null, { ...user, provider: 'facebook' });
         })
         .catch(error => done(error, null));
     }
