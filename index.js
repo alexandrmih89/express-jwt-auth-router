@@ -77,6 +77,7 @@ export default (db, opts) => {
   app.use((err, req, res, next) => {
     if (err) {
       const status = err.statusCode || 500;
+      console.error(err);
       res
         .status(status)
         .json({

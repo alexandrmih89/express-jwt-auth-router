@@ -58,8 +58,8 @@ export const generateRefreshToken = (req, res, next) => {
 };
 
 //TODO: reset access from facebook
-const facebookStrategy = (profileFields, fbUserQuery, fbCreateUser) =>
-  new FacebookTokenStrategy({
+const facebookStrategy = (profileFields, fbUserQuery, fbCreateUser) => {
+  return new FacebookTokenStrategy({
       clientID: fbId,
       clientSecret: fbSecret,
       profileFields,
@@ -67,21 +67,21 @@ const facebookStrategy = (profileFields, fbUserQuery, fbCreateUser) =>
     }, (req, facebookAccessToken, facebookRefreshToken, fbProfile, done) => {
       fbUserQuery(fbProfile._json)
         .then(user => {
-          if(user) {
+          if (user) {
             return user;
           }
           return fbCreateUser(fbProfile._json)
-            .then(user => ({ ...user, firstLogin: true  }));
+            .then(user => {
+              console.log({ ...user.toJSON(), firstLogin: true });
+            });
         })
         .then(user => {
-          if(user.firstLogin) {
-            acl.addUserRoles(user.id, user.role || 'user');
-          }
-          done(null, { ...user, provider: 'facebook' });
+          done(null, { ...user.toJSON(), provider: 'facebook' });
         })
         .catch(error => done(error, null));
     }
   );
+};
 
 export const applyStrategies = (passport, {
   loginQuery,

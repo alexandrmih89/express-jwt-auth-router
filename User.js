@@ -8,6 +8,17 @@ export default (db, acl, customize = () => {}) => {
   const UserNotFound = () => HttpErrors.NotFound("User not found");
   const AlreadyTaken = () => HttpErrors.Forbidden("Username is already taken");
 
+  const Role = db.define('role', {
+    role: {
+      type: Sequelize.STRING,
+      primaryKey: true,
+      allowNull: false,
+      validate: {
+        notEmpty: true
+      }
+    }
+  }, { paranoid: true });
+
   const User = db.define('user', {
     username: {
       type: Sequelize.STRING,
@@ -27,19 +38,19 @@ export default (db, acl, customize = () => {}) => {
           user.password = bcrypt.hashSync(user.password, 10);
         }
       }
+    },
+    defaultScope: {
+      include: [{
+        all: true
+      }]
+    },
+    userScope: {
+      include: [{
+        model: Role,
+        as: 'roles'
+      }]
     }
   });
-
-  const Role = db.define('role', {
-    role: {
-      type: Sequelize.STRING,
-      primaryKey: true,
-      allowNull: false,
-      validate: {
-        notEmpty: true
-      }
-    }
-  }, { paranoid: true });
 
   const Permission = db.define('permission', {
     permission: {
@@ -93,15 +104,17 @@ export default (db, acl, customize = () => {}) => {
     }
   });
 
-  UserProvider.belongsTo(Provider);
+  UserProvider.belongsTo(Provider, { as: 'provider' });
 
   Role.belongsToMany(Permission, { as: 'permissions', through: 'roles_permissions' });
 
-  User.findByUsername = (username) => User.findAll({
-    where: {username},
-    include: [{all: true}]
+  User.findByUsername = (username) => User.findOne({
+    where: { username }
   })
-    .then(users => users[0]);
+    .then(user => {
+      console.log(user);
+      return user
+    });
 
   User.login = (reqUser) => User.findByUsername(reqUser.username)
     .then(user => {
@@ -112,7 +125,7 @@ export default (db, acl, customize = () => {}) => {
       return user;
     });
 
-  User.register = (reqUser) => User.findByUsername(reqUser.username)
+  User.register = (reqUser, userRole = 'user') => User.findByUsername(reqUser.username)
     .then((user) => {
       if (user) {
         throw AlreadyTaken();
@@ -122,11 +135,43 @@ export default (db, acl, customize = () => {}) => {
           //TODO: it should be a promise
           //TODO: add multiple roles from
           //TODO: set role by default
-          user.addRoles(1);
-          acl.addUserRolesPromise(user.id, 'user');
-          return user;
+          acl.addUserRolesPromise(user.id, userRole);
+          return user.addRole(userRole)
+            .then(() => User.findById(user.id));
         });
     });
+
+  User.facebookQuery = (fbProfile) => User.findOne({
+    include: [{
+      model: UserProvider,
+      as: 'authProviders',
+      required: true,
+      where: {
+        identifier: fbProfile.id
+      }
+    }]
+  });
+
+  User.facebookCreate = (fbProfile, facebookRole = 'user') => {
+    return User.create({
+      username: fbProfile.email || fbProfile.emails[0]
+    })
+    //TODO: optimize - load providers at application start?
+      .then(user =>
+        Provider.findOne({ where: { type: 'facebook' } })
+          .then(provider =>
+            UserProvider.create({ identifier: fbProfile.id })
+              .then(authProvider => {
+                acl.addUserRolesPromise(user.id, facebookRole);
+                return Promise.all([
+                  authProvider.setProvider(provider),
+                  user.addAuthProvider(authProvider),
+                  user.addRole(facebookRole)
+                ]);
+              }))
+          .then(user => User.findById(user.id))
+      );
+  };
 
   User.prototype.validatePassword = function (password) {
     //TODO: remove plain comparison
@@ -137,6 +182,7 @@ export default (db, acl, customize = () => {}) => {
 
   User.prototype.toJSON = function () {
     const user = this.get();
+    console.log(user);
     return {
       ...user,
       //TODO: optimize query?
