@@ -17,19 +17,17 @@ export default (db, acl, customize = () => {}) => {
       }
     },
     password: {
-      type: Sequelize.STRING,
-      allowNull: false,
-      validate: {
-        notEmpty: true
-      }
+      type: Sequelize.STRING
     }
   }, {
+    paranoid: true,
     hooks: {
       beforeValidate: function (user) {
-        user.password = bcrypt.hashSync(user.password, 10);
+        if(user.password) {
+          user.password = bcrypt.hashSync(user.password, 10);
+        }
       }
-    },
-    paranoid: true
+    }
   });
 
   const Role = db.define('role', {
@@ -152,7 +150,9 @@ export default (db, acl, customize = () => {}) => {
   User.hasMany(UserProvider, { as: 'authProviders' });
   User.belongsToMany(Role, { as: 'roles', through: 'user_roles' });
 
-  customize(User);
+  const exports = { User, Role };
 
-  return User;
+  customize(exports);
+
+  return exports;
 };

@@ -37,13 +37,17 @@ export default (db, opts) => {
   const {
     loginQuery,
     registerQuery,
+    fbUserQuery,
+    fbCreateUser,
     mountPoint = '/api/v1',
     apiRouter
   } = opts;
 
   applyStrategies(passport, {
     loginQuery,
-    registerQuery
+    registerQuery,
+    fbUserQuery,
+    fbCreateUser
   });
 
   const auth = authRouter(passport);
