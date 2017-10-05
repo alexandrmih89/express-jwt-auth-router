@@ -26,18 +26,6 @@ export default (db) => {
     })
   };
 
-  acl.allowPromise = (roles, resources, permissions) => {
-    return new Promise((resolve, reject) => {
-      acl.allow(roles, resources, permissions, (err) => {
-        if(err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    })
-  };
-
   acl.isAuthenticated = isAuthenticated;
 
   acl.canMiddleware = (permission, when = () => true) =>

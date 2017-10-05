@@ -61,7 +61,7 @@ Use ACL:
 ```
 import acl from './acl';
 
-acl.allowPromise('user', 'orders', 'get');
+acl.allow('user', 'orders', 'get');
 
 app.get('/orders', acl.canMiddleware('orders:get'), (req, res, next) => {
     res.send('OK!');
