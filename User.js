@@ -150,16 +150,13 @@ export default (db, acl, customize = () => {}) => {
     })
     //TODO: optimize - load providers at application start?
       .then(user => Provider.findOne({where: { type: 'facebook' }})
-        .then(provider =>
-          UserProvider.create({identifier: fbProfile.id})
-            .then(authProvider => {
-              acl.addUserRolesPromise(user.id, facebookRole);
-              return Promise.all([
-                authProvider.setProvider(provider),
-                user.addAuthProvider(authProvider),
-                user.addRole(facebookRole)
-              ]);
-            }))
+        .then(provider => UserProvider.create({identifier: fbProfile.id})
+          .then(authProvider => authProvider.setProvider(provider))
+          .then(authProvider => user.addAuthProvider(authProvider)))
+        .then(() => {
+          acl.addUserRolesPromise(user.id, facebookRole);
+          return user.addRole(facebookRole);
+        })
         .then(() => User.findById(user.id)));
   };
 
