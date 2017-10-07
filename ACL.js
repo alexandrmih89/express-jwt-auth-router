@@ -1,13 +1,11 @@
 import ACL from 'acl';
 import Promise from 'bluebird';
 import HttpError from 'http-errors';
-import SequelizeBackend from 'acl-sequelize-backend';
 import combine from './combine';
 import { isAuthenticated } from './auth';
 
 let allowed = [];
 
-//TODO: use memory or redis and load roles from database
 export default (db, { admin = 'admin' } = {}) => {
 
   const aclOptions = {};
