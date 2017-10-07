@@ -1,4 +1,5 @@
 import express from 'express';
+import { jsonErrorHandler, jsonResultHandler, validationErrorHandler } from './expressResultHandlers';
 import cors from 'cors';
 import volleyball from 'volleyball';
 import bodyParser from 'body-parser';
@@ -58,37 +59,16 @@ export default (db, opts) => {
   /*** result handler must match the same routes
    * unlike error handlers (see below)
    ***/
-  app.use(mountPoint, (req, res, next) => {
-    res.json(res.result);
-  });
+  app.use(mountPoint, jsonResultHandler());
 
   /***
    * error handlers go after matched routes
    * if routes after are matched
    * errors before are skipped
    ***/
-  app.use((err, req, res, next) => {
-    if (err instanceof ValidationError) {
-      err.statusCode = 400;
-    }
-    next(err);
-  });
+  app.use(validationErrorHandler());
 
-  app.use((err, req, res, next) => {
-    if (err) {
-      const status = err.statusCode || 500;
-      console.error(err);
-      res
-        .status(status)
-        .json({
-          ...err,
-          message: err.message,
-          type: err.name,
-          status,
-        });
-    }
-    next();
-  });
+  app.use(jsonErrorHandler());
 
   //apply to the latest router, otherwise latter will not work
   //setupHandlers(auth);
