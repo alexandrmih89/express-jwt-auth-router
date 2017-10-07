@@ -19,6 +19,8 @@ export default (db, acl, customize = () => {}) => {
     }
   }, { paranoid: true });
 
+  Role.belongsToMany(Role, { as: 'parentRoles', through: 'role_parents' });
+
   const User = db.define('user', {
     username: {
       type: Sequelize.STRING,
