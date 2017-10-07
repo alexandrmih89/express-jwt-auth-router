@@ -97,15 +97,28 @@ export default (db, opts) => {
 
   return {
     app,
-    startServer: () => {
+    startServer: ({ acl } = {}) => {
       const server = app.listen(port, () => {
         console.log('Listening on ', server.address());
         db.sync({force: false})
           .then(message => {
             console.log('...and DB syncronized.');
           });
+        if(acl) {
+          acl.build();
+        }
         return server;
       });
+    },
+    startTest: ({ acl } = {}) => {
+      return db.sync({force: false})
+        .then(message => {
+          console.log('...and DB prepared for test.');
+          if(acl) {
+            return acl.build()
+              .then(() => console.log('acl prepared'));
+          }
+        });
     }
   };
 }
