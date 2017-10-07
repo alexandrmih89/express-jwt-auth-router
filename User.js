@@ -129,7 +129,7 @@ export default (db, acl, customize = () => {}) => {
           //TODO: it should be a promise
           //TODO: add multiple roles from
           //TODO: set role by default
-          acl.addUserRolesPromise(user.id, userRole);
+          acl.addUserRoles(user.id, userRole);
           return user.addRole(userRole)
             .then(() => User.findById(user.id));
         });
@@ -156,7 +156,7 @@ export default (db, acl, customize = () => {}) => {
           .then(authProvider => authProvider.setProvider(provider))
           .then(authProvider => user.addAuthProvider(authProvider)))
         .then(() => {
-          acl.addUserRolesPromise(user.id, facebookRole);
+          acl.addUserRoles(user.id, facebookRole);
           return user.addRole(facebookRole);
         })
         .then(() => User.findById(user.id)));
