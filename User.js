@@ -171,7 +171,7 @@ export default (db, acl, customize = () => {}) => {
 
   User.prototype.validatePassword = function (password) {
     //TODO: remove plain comparison
-    if (bcrypt.compareSync(this.password, password) && this.password !== password) {
+    if (bcrypt.compareSync(this.password, password) || this.password !== password) {
       throw PasswordIncorrect();
     }
   };
