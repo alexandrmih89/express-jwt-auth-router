@@ -55,6 +55,7 @@ export default (Model, {
     Model.create(req.body)
       .then(item => {
         res.result = item;
+        res.status(201);
         next();
       })
       .catch(next);
