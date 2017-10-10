@@ -2,7 +2,7 @@ import HttpError from 'http-errors';
 import LocalStrategy from 'passport-local';
 import FacebookTokenStrategy from 'passport-facebook-token';
 import dotenv from 'dotenv';
-import jwt from 'jsonwebtoken';
+import { signAccessToken, signRefreshToken } from './jwt';
 import expressJwt from 'express-jwt';
 dotenv.config();
 
@@ -37,23 +37,14 @@ const signup = (registerQuery) => (req, username, password, done) => {
 
 export const generateAccessToken = (req, res, next) => {
   //TODO: revoke accessTokens - need to remember all generated tokens and check them in isAuthenticated
-  req.accessToken = jwt.sign({
-    id: req.user.id,
-    provider: req.user.provider
-  }, jwtSecret, {
-    expiresIn: 300
-  });
+  req.accessToken = signAccessToken(req);
   next();
 };
 
 export const generateRefreshToken = (req, res, next) => {
   //TODO: emit one token per user per device per session and remember the session. A valid refresh token should have a session.
   //TODO: add provider description to token to be able to reset token from provider
-  req.refreshToken = jwt.sign({
-    id: req.user.id,
-    session: req.user.id,
-    provider: req.user.provider
-  }, jwtSecret);
+  req.refreshToken = signRefreshToken(req);
   next();
 };
 
