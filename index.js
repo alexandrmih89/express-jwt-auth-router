@@ -4,7 +4,6 @@ import cors from 'cors';
 import volleyball from 'volleyball';
 import bodyParser from 'body-parser';
 import passport from 'passport';
-import { ValidationError } from 'sequelize/lib/errors/index';
 import authRouter from './authRouter';
 import { applyStrategies } from './auth';
 
@@ -59,16 +58,16 @@ export default (db, opts) => {
   /*** result handler must match the same routes
    * unlike error handlers (see below)
    ***/
-  app.use(mountPoint, jsonResultHandler());
+  app.use(mountPoint, jsonResultHandler);
 
   /***
    * error handlers go after matched routes
    * if routes after are matched
    * errors before are skipped
    ***/
-  app.use(validationErrorHandler());
+  app.use(validationErrorHandler);
 
-  app.use(jsonErrorHandler());
+  app.use(jsonErrorHandler);
 
   //apply to the latest router, otherwise latter will not work
   //setupHandlers(auth);
