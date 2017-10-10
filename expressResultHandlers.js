@@ -1,3 +1,5 @@
+import { ValidationError } from 'sequelize/lib/errors/index';
+
 export const jsonResultHandler = (req, res, next) => {
   res.json(res.result);
 };
