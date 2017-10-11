@@ -35,7 +35,7 @@ export default (db, { admin = 'admin' } = {}) => {
     return db.models.role_parents.findAll().then(parentRoles => {
       parentRoles.forEach(({ roleRole, parentRoleRole }) => {
         acl.addRoleParents(roleRole, parentRoleRole, (err) => {
-          console.log(err, roleRole, parentRoleRole);
+          console.log('addRoleParents', err, roleRole, parentRoleRole);
         });
       });
     })
@@ -43,7 +43,7 @@ export default (db, { admin = 'admin' } = {}) => {
         return db.models.user_roles.findAll().then(userRoles => {
           userRoles.forEach(({ userId, roleRole }) => {
             acl.addUserRoles(userId, roleRole, (err) => {
-              console.warn(err, userId, roleRole);
+              console.warn('addUserRoles', err, userId, roleRole);
             });
           });
         });
@@ -51,7 +51,7 @@ export default (db, { admin = 'admin' } = {}) => {
       .then(() => {
         allowed.forEach(({ roles, resources, permissions }) => {
           acl.allow(roles, resources, permissions, (err) => {
-            console.log(err, roles, resources, permissions);
+            console.log('allow', err, roles, resources, permissions);
           })
         });
       });

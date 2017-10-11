@@ -84,7 +84,8 @@ export default (db, opts) => {
             console.log('...and DB syncronized.');
           });
         if(acl) {
-          acl.build();
+          acl.build()
+            .then(() => console.log('acl prepared'));
         }
         return server;
       });
