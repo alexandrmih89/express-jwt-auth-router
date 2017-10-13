@@ -101,5 +101,20 @@ export default (Model, {
       })
       .catch(next);
   },
+  destroy: (req, res, next) => {
+    Model.destroy({
+      where: {
+        id: req.params.id
+      }
+    })
+      .then(item => {
+        if(!item) {
+          throw new HttpError.NotFound("Not found")
+        }
+        res.result = item;
+        next();
+      })
+      .catch(next);
+  },
   userOwn: ({ user: { id } }) => ({ userId: id })
 });
