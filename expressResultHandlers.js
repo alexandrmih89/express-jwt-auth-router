@@ -1,7 +1,9 @@
 import { ValidationError } from 'sequelize/lib/errors/index';
 
 export const jsonResultHandler = (req, res, next) => {
-  res.json(res.result);
+  if(res.result) {
+    res.json(res.result);
+  }
 };
 
 export const validationErrorHandler = (err, req, res, next) => {
