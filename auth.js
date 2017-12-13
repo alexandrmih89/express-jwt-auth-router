@@ -1,21 +1,10 @@
-import HttpError from 'http-errors';
 import LocalStrategy from 'passport-local';
 import FacebookTokenStrategy from 'passport-facebook-token';
-import dotenv from 'dotenv';
-import { signAccessToken, signRefreshToken } from './jwt';
-import expressJwt from 'express-jwt';
-dotenv.config();
+import acl from './ACL';
+import './util/dotenv';
 
-const jwtSecret = process.env.JWT_SECRET;
 const fbId = process.env.FB_ID;
 const fbSecret = process.env.FB_SECRET;
-
-//TODO: set auth relevant errors
-export const Unauthorized = (message) => new HttpError.Forbidden(message);
-export const BadRequest = (message) => new HttpError.BadRequest(message);
-export const Forbidden = (message) => new HttpError.Forbidden(message);
-
-export const authenticateJWT = expressJwt({ secret: jwtSecret });
 
 const localStrategy = (verifyCallback) => new LocalStrategy({
   usernameField : 'username',
@@ -23,29 +12,35 @@ const localStrategy = (verifyCallback) => new LocalStrategy({
   passReqToCallback : true // allows us to pass back the entire request to the callback
 }, verifyCallback);
 
-const signin = (loginQuery) => (req, username, password, done) => {
+const signinStrategy = (loginQuery) => (req, username, password, done) => {
   loginQuery(req.body)
     .then(user => done(null, { ...user.toJSON(), provider: 'password' }))
     .catch(done);
 };
 
-const signup = (registerQuery) => (req, username, password, done) => {
+const signupStrategy = (registerQuery) => (req, username, password, done) => {
   registerQuery(req.body)
     .then(user => done(null, { ...user.toJSON(), provider: 'password', firstLogin: true }))
     .catch(done);
 };
 
 export const generateAccessToken = (req, res, next) => {
-  //TODO: revoke accessTokens - need to remember all generated tokens and check them in isAuthenticated
-  req.accessToken = signAccessToken(req);
-  next();
+  try {
+    //TODO: GET USER FROM DATABASE
+    req.accessToken = acl.signAccessToken(req);
+    next();
+  } catch (e) {
+    next(e);
+  }
 };
 
 export const generateRefreshToken = (req, res, next) => {
-  //TODO: emit one token per user per device per session and remember the session. A valid refresh token should have a session.
-  //TODO: add provider description to token to be able to reset token from provider
-  req.refreshToken = signRefreshToken(req);
-  next();
+  try {
+    req.refreshToken = acl.signRefreshToken(req);
+    next();
+  } catch (e) {
+    next(e);
+  }
 };
 
 //TODO: reset access from facebook
@@ -80,9 +75,9 @@ export const applyStrategies = (passport, {
   fbCreateUser
 }) => {
 
-  passport.use('local-login', localStrategy(signin(loginQuery)));
+  passport.use('local-login', localStrategy(signinStrategy(loginQuery)));
 
-  passport.use('local-signup', localStrategy(signup(registerQuery)));
+  passport.use('local-signup', localStrategy(signupStrategy(registerQuery)));
 
   const profileFields = fbProfileFields || [
     'id',
@@ -98,17 +93,6 @@ export const applyStrategies = (passport, {
 
 export const authenticate = (passport) => (strategy) => passport.authenticate(strategy, { session: false });
 
-export const isAuthenticated = (req, res, next) => {
-  //TODO: check if token does not expire, then reject, cause it's a refreshToken
-  //TODO: serialize user???
-  authenticateJWT(req, res, (err) => {
-    if(err) {
-      return next(Unauthorized("Invalid token"));
-    }
-    next();
-  });
-};
-
 export const signIn = (req, res, next) => {
   res.result = {
     user: req.user,
@@ -119,20 +103,9 @@ export const signIn = (req, res, next) => {
 };
 
 export const signOut = (req, res, next) => {
-  //TODO: remove session
-  //TODO: add message SignedOut
+  //TODO: revoke all tokens iat before for this user and device
+  res.result = {
+    message: "Signed out successfully"
+  };
   next();
-};
-
-export const isRefreshTokenValid = (req, res, next) => {
-  isAuthenticated(req, res, (err) => {
-    if(req.user && !req.user.exp && req.user.session) { //check if token expires, then reject, cause it's an accessToken
-      //TODO: check session here
-      //TODO: how to generate session? A random?
-      next();
-    } else {
-      err = Unauthorized("Invalid token");
-    }
-    next(err);
-  });
 };

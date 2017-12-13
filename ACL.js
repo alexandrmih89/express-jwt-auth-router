@@ -1,102 +1,96 @@
 import ACL from 'acl';
-import Promise from 'bluebird';
+import _ from 'lodash';
+import expressJwt from 'express-jwt';
+import jwt from 'jsonwebtoken';
 import HttpError from 'http-errors';
-import combine from './combine';
-import { isAuthenticated } from './auth';
+import combine from './util/combine';
+import './util/dotenv';
 
-let allowed = [];
+const jwtSecret = process.env.JWT_SECRET;
 
-export default (db, { admin = 'admin' } = {}) => {
+const authenticateJWT = expressJwt({ secret: jwtSecret });
+const adminRole = process.env.ADMIN_ROLE || 'admin';
 
-  const aclOptions = {};
-  const tablePrefix = 'acl_';
+let r = process.env.ACL_REDIS ? process.env.ACL_REDIS.split(',') : false;
+const aclBackend = r ? new ACL.redisBackend(r[0], r[1] || '') : new ACL.memoryBackend();
+let acl = new ACL(aclBackend);
 
-  //let acl = new ACL(new SequelizeBackend(db, tablePrefix, aclOptions));
-  let acl = new ACL(new ACL.memoryBackend());
+acl.isAuthorized = isAuthorized;
+acl.isAuthenticated = combine([ authenticateJWT, isAuthenticated ]);
+acl.signAccessToken = signAccessToken;
+acl.signRefreshToken = signRefreshToken;
+acl.isRefreshTokenValid = isRefreshTokenValid;
 
-  //TODO: this does not work as a promise :(
-  acl.addUserRolesPromise = (userId, roles) => {
-    return new Promise((resolve, reject) => {
-      acl.addUserRoles(userId, roles, (err) => {
-        if(err) {
-          reject(err);
-        } else {
-          resolve();
+acl.canMiddleware = (permission, when) => combine([ acl.isAuthenticated, isAuthorized(permission, when) ]);
+
+
+export default acl;
+
+
+
+function isAuthorized(permission, when = (req, res) => true) {
+  return (req, res, next) => {
+
+    const p = permission.split(":");
+
+    const { roles } = req.user;
+
+    //TODO: should I use memory or redis here???
+    acl.areAnyRolesAllowed(roles, p[0], p[1])
+      .then((isAllowed) => {
+        if(isAllowed && when(req, res)) {
+          next();
+          return;
         }
-      });
-    })
-  };
 
-  acl.push = (roles, resources, permissions) => {
-    allowed.push({ roles, resources, permissions });
-  };
+        if(_.includes(roles, adminRole)) {
+          next();
+          return;
+        }
 
-  acl.build = () => {
-    return db.models.role_parents.findAll().then(parentRoles => {
-      parentRoles.forEach(({ roleRole, parentRoleRole }) => {
-        acl.addRoleParents(roleRole, parentRoleRole, (err) => {
-          console.log('addRoleParents', err, roleRole, parentRoleRole);
-        });
-      });
-    })
-      .then(() => {
-        return db.models.user_roles.findAll().then(userRoles => {
-          userRoles.forEach(({ userId, roleRole }) => {
-            acl.addUserRoles(userId, roleRole, (err) => {
-              console.warn('addUserRoles', err, userId, roleRole);
-            });
-          });
-        });
+        throw new HttpError.Forbidden("Permission denied");
       })
-      .then(() => {
-        allowed.forEach(({ roles, resources, permissions }) => {
-          acl.allow(roles, resources, permissions, (err) => {
-            console.log('allow', err, roles, resources, permissions);
-          })
-        });
-      });
-  };
+      .catch(next);
+  }
+}
 
-  acl.isAuthenticated = isAuthenticated;
+function isAuthenticated(req, res, next) {
+  if(req.user.type !== 'access') {
+    return next(HttpError.Unauthorized("Invalid access token"));
+  }
+  //TODO: check if access token is blacklisted
+  return next();
+}
 
-  acl.canMiddleware = (permission, when = () => true) =>
-    combine([isAuthenticated, (req, res, next) => {
-      const p = permission.split(":");
-      acl.hasRole(req.user.id, admin, (err, isAdmin) => {
-        if(isAdmin) {
-          next();
-        } else {
-          acl.isAllowed(req.user.id, p[0], p[1], (err, allowed) => {
-            if (err) {
-              next(err);
-            } else if (allowed && when(req, res)) {
-              next();
-            } else {
-              next(new HttpError.Forbidden("Permission denied"));
-            }
-          });
-        }
-      });
-    }]);
+function isRefreshTokenValid(req, res, next) {
+  authenticateJWT(req, res, (err) => {
+    if(req.user && !req.user.exp && req.user.type === 'refresh') { //check if token expires, then reject, cause it's an accessToken
+      //TODO: check if refresh token is blacklisted
+      return next();
+    } else {
+      err = HttpError.Unauthorized("Invalid refresh token");
+    }
+    return next(err);
+  });
+}
 
-  acl.canSkipMiddleware = (permission, when = () => true) =>
-    combine([isAuthenticated, (req, res, next) => {
-      const p = permission.split(":");
-      acl.hasRole(req.user.id, admin, (err, isAdmin) => {
-        if (isAdmin) {
-          next();
-        } else {
-          acl.isAllowed(req.user.id, p[0], p[1], (err, allowed) => {
-            if (allowed && when(req, res)) {
-              next();
-            } else {
-              next('route');
-            }
-          });
-        }
-      });
-    }]);
+const signatureNotComplete = () => new HttpError.BadRequest("Signature payload incomplete");
 
+function signAccessToken(req) {
+  return signToken(req, 'access', 300);
+}
 
-  return acl;
+function signRefreshToken(req) {
+  return signToken(req, 'refresh');
+}
+
+function signToken(req, type, expiresIn) {
+  const { id, provider, roles, device } = req.user;
+
+  if(!id || !provider || !roles) {
+    throw signatureNotComplete();
+  }
+
+  //TODO: api?
+  return jwt.sign({ id, provider, roles, device, type }, jwtSecret, expiresIn ? { expiresIn } : {});
 }

@@ -1,5 +1,7 @@
 import HttpError from 'http-errors';
 
+//TODO: translate
+
 export default (Model, {
   perPage
 } = {}) => ({

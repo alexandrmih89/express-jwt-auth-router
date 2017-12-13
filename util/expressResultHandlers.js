@@ -15,7 +15,7 @@ export const validationErrorHandler = (err, req, res, next) => {
 
 export const jsonErrorHandler = (err, req, res, next) => {
   if (err) {
-    const status = err.statusCode || 500;
+    const status = err.statusCode || err.status || 500;
     console.error(err);
     res
       .status(status)

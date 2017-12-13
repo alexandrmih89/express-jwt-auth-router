@@ -1,28 +1,22 @@
 import express from 'express';
+import passport from './util/passport';
 import {
   authenticate,
   generateAccessToken,
   generateRefreshToken,
   signIn,
   signOut,
-  isRefreshTokenValid,
-  isAuthenticated
 } from './auth';
+import acl from './ACL';
 
-export default (passport) => {
+const apiRouter = express.Router();
 
-  const apiRouter = express.Router();
+const auth = authenticate(passport);
 
-  const auth = authenticate(passport);
+apiRouter.post('/signup', auth('local-signup'), generateAccessToken, generateRefreshToken, signIn);
+apiRouter.post('/signin', auth('local-login'), generateAccessToken, generateRefreshToken, signIn);
+apiRouter.get('/facebook', auth('facebook-token'), generateAccessToken, generateRefreshToken, signIn);
+apiRouter.get('/refresh', acl.isRefreshTokenValid, generateAccessToken, signIn);
+apiRouter.get('/signout', acl.isAuthenticated, signOut);
 
-  /*** auth ***/
-  apiRouter.post('/signin', auth('local-login'), generateAccessToken, generateRefreshToken, signIn);
-  apiRouter.post('/signup', auth('local-signup'), generateAccessToken, generateRefreshToken, signIn);
-  apiRouter.get('/facebook', auth('facebook-token'), generateAccessToken, generateRefreshToken, signIn);
-  apiRouter.get('/refresh', isRefreshTokenValid, generateAccessToken, signIn);
-  apiRouter.get('/signout', isAuthenticated, signOut);
-  /*** **** ***/
-
-  return apiRouter;
-
-}
+export default apiRouter;
