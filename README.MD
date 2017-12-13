@@ -2,70 +2,88 @@ Start from db:
 
 db/db.js
 ```
-import Sequelize from 'sequelize';
-import dotenv from 'dotenv';
-dotenv.config();
+import { Sequelize } from '../lib/db/db';
+import db from '../lib/db';
 
-export default new Sequelize(process.env.DB_URL);
+export default db;
+
+export {
+  Sequelize
+}
 ```
 
-Configure acl:
+import models you will extend or scope or associate:
+db/index.js
+```javascript
+import User from 'lib/db/User'; //lib model
+import UserInfo from './UserInfo'; //custom model associated with User
+import File from './File'; //custom model
+
+export {
+  User,
+  UserInfo,
+  File
+}
 ```
-import ACL from 'express-jwt-auth-router/ACL';
-import db from './db';
 
-const acl = ACL(db);
+configure protected routers (Use ACL)
+```javascript
+import express from 'express';
+import DBUtil from '../../lib/dbutil'
+import Store from '../../db/Store';
+import acl from '../../lib/ACL';
 
-export default acl;
-```
+const storesRouter = express.Router();
 
-USERS are configured separately:
-```
-import db from './db';
-import acl from './acl';
-import configureUser from 'express-jwt-auth-router/User';
+const resource = 'stores';
 
-const { User, Role } = configureUser(db, acl, ({ User, Role }) => {
-  //User.hasMany();
+const dbu = DBUtil(Store);
+
+acl.allow('user', resource, 'get');
+storesRouter.get('/', acl.canMiddleware(`${resource}:get` ), dbu.findAll);
+
+storesRouter.get('/:id', acl.canMiddleware(`${resource}:get`), dbu.findOne);
+
+acl.allow('user', resource, 'create');
+storesRouter.post('/', acl.canMiddleware(`${resource}:create`), dbu.create);
+
+acl.allow('user', resource, 'edit');
+storesRouter.put('/:id', acl.canMiddleware(`${resource}:edit`), dbu.updateWhere(dbu.userOwn));
+
+storesRouter.delete('/:id', (req, res, next) => {
+  //Delete store
+  next();
 });
 
-export default User;
-
-export { Role };
+export default storesRouter;
 ```
 
 Join it up:
-```
-import User from './db/User';
-import db from './db/db';
-import apiRouter from './api';
-import anyOtherRouter from './api';
-import server from 'express-jwt-auth-router'
+```javascript
+import express from 'express';
+import staticRouter from './routes/static/static';
 
-const { app, startServer } = server(db, {
+//lib imports
+import { User } from './db';
+import passport from './lib/util/passport';
+import { applyStrategies } from './lib/auth';
+import authRouter from './lib/authRouter';
+
+const app = express();
+
+applyStrategies(passport, {
   loginQuery: User.login, //a function accepting User (from request) and returning a promise (usually db call) which should return User or throw error
   registerQuery: User.register, // (User, userRole = 'user') => Promise; a function accepting User and returning a promise (usually db call), to check if user exists, and then refister if not. Should return User or throw error
   fbUserQuery: User.checkFBUser, // accepts fbProfile._json, returns a Promise with user formatted (usually db call), or null if nothing found. Should omit password and other sensitive data.
-  fbCreateUser User.createFBUser, // (User, userRole = 'user') => Promise; creates FB profile user
-  apiRouter //optional, will be mounted at mount point
-  mountPoint: '/api/v1' //optional - route to mount
+  fbCreateUser: User.createFBUser, // (User, userRole = 'user') => Promise; creates FB profile user
   fbProfileFields, //  facebook profile fields. By default: [ 'id', 'email', 'displayName', 'gender', 'picture', 'age_range', 'cover', 'link', 'locale', 'timezone', 'updated_time', 'verified']
 });
 
-app.use(anyOtherRouter); //do whatever you want with your express app
 
-startServer();
-```
+app.use(staticRouter);
+app.use('/api/v1/', authRouter);
+app.use('/api/v1/stores/', storesRouter);
 
-Use ACL:
-```
-import acl from './acl';
-
-acl.allow('user', 'orders', 'get');
-
-app.get('/orders', acl.canMiddleware('orders:get'), (req, res, next) => {
-    res.send('OK!');
-})
 ```
 
 User data (request):
