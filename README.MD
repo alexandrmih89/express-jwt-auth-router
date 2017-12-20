@@ -1,9 +1,19 @@
+### What's it about?
+
+We are developing a lot of FullStack Apps and came to conclusion we needed a starter that could be maintainable and upgradable. We brought together JWT, ACL, sequelize and other useful stuff. So we proudly present and share our work to the community. Use it with https://github.com/alvelig/react-native-jwt-core for ReactNative iOS and Android Apps and https://github.com/alvelig/react-app-jwt-core for React web apps, and life will become much easier.
+
+### Installation
+
+`npm i -S git+ssh://git@github.com:alvelig/react-app-jwt-core.git`
+
+### Usage
+
 Start from db:
 
 db/db.js
 ```
-import { Sequelize } from '../lib/db/db';
-import db from '../lib/db';
+import { Sequelize } from 'react-app-jwt-core/db/db';
+import db from 'react-app-jwt-core/db';
 
 export default db;
 
@@ -15,7 +25,7 @@ export {
 import models you will extend or scope or associate:
 db/index.js
 ```javascript
-import User from 'lib/db/User'; //lib model
+import User from 'react-app-jwt-core/db/User'; //lib model
 import UserInfo from './UserInfo'; //custom model associated with User
 import File from './File'; //custom model
 
@@ -29,9 +39,9 @@ export {
 configure protected routers (Use ACL)
 ```javascript
 import express from 'express';
-import DBUtil from '../../lib/dbutil'
+import DBUtil from 'react-app-jwt-core/dbutil'
 import Store from '../../db/Store';
-import acl from '../../lib/ACL';
+import acl from 'react-app-jwt-core/lib/ACL';
 
 const storesRouter = express.Router();
 
@@ -65,9 +75,9 @@ import staticRouter from './routes/static/static';
 
 //lib imports
 import { User } from './db';
-import passport from './lib/util/passport';
-import { applyStrategies } from './lib/auth';
-import authRouter from './lib/authRouter';
+import passport from 'react-app-jwt-core/util/passport';
+import { applyStrategies } from 'react-app-jwt-core/auth';
+import authRouter from 'react-app-jwt-core/authRouter';
 
 const app = express();
 
