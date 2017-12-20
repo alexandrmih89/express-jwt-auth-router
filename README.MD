@@ -4,7 +4,7 @@ We are developing a lot of FullStack Apps and came to conclusion we needed a sta
 
 ### Installation
 
-`npm i -S git+ssh://git@github.com:alvelig/react-app-jwt-core.git`
+`npm i -S git+ssh://git@github.com:alvelig/express-jwt-auth-router.git`
 
 ### Usage
 
@@ -12,8 +12,8 @@ Start from db:
 
 db/db.js
 ```
-import { Sequelize } from 'react-app-jwt-core/db/db';
-import db from 'react-app-jwt-core/db';
+import { Sequelize } from 'express-jwt-auth-router/db/db';
+import db from 'express-jwt-auth-router/db';
 
 export default db;
 
@@ -25,7 +25,7 @@ export {
 import models you will extend or scope or associate:
 db/index.js
 ```javascript
-import User from 'react-app-jwt-core/db/User'; //lib model
+import User from 'express-jwt-auth-router/db/User'; //lib model
 import UserInfo from './UserInfo'; //custom model associated with User
 import File from './File'; //custom model
 
@@ -39,9 +39,9 @@ export {
 configure protected routers (Use ACL)
 ```javascript
 import express from 'express';
-import DBUtil from 'react-app-jwt-core/dbutil'
+import DBUtil from 'express-jwt-auth-router/dbutil'
 import Store from '../../db/Store';
-import acl from 'react-app-jwt-core/lib/ACL';
+import acl from 'express-jwt-auth-router/lib/ACL';
 
 const storesRouter = express.Router();
 
@@ -75,9 +75,9 @@ import staticRouter from './routes/static/static';
 
 //lib imports
 import { User } from './db';
-import passport from 'react-app-jwt-core/util/passport';
+import passport from 'express-jwt-auth-router/util/passport';
 import { applyStrategies } from 'react-app-jwt-core/auth';
-import authRouter from 'react-app-jwt-core/authRouter';
+import authRouter from 'express-jwt-auth-router/authRouter';
 
 const app = express();
 
