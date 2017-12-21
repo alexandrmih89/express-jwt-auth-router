@@ -22,7 +22,9 @@ export {
 }
 ```
 
-import models you will extend or scope or associate:
+Create your `.env` file and add `DB_URL=postgres://localhost:5432/yourapp`. 
+
+Re-import models from `express-jwt-auth-router`, which you will extend or scope or associate:
 db/index.js
 ```javascript
 import User from 'express-jwt-auth-router/db/User'; //lib model
@@ -99,3 +101,5 @@ app.use('/api/v1/stores/', storesRouter);
 User data (request):
 
 To create a user with role need to use acl and set the roles in registerQuery and fbCreateUser.
+
+
