@@ -105,6 +105,23 @@ User data (request):
 To create a user with role need to use acl and set the roles in registerQuery and fbCreateUser.
 
 
+### Configuration
+
+Create your `.env` file and add `DB_URL=postgres://localhost:5432/yourapp`. (Typical DB URL (See Sequelize docs))
+
+Also it supports:
+```
+#Required
+JWT_SECRET=123123123 #Your JWT secret (required)
+FB_ID=1585753124796680 #FB ID
+FB_SECRET=54b40f74bd4430663804db3d2dca1520 #FB SECRET
+
+
+#Optional
+ADMIN_ROLE=admin //Admin role (by default admin)
+ACL_REDIS= //IS ACL STORED IN REDIS (MEMORY BY DEFAULT)
+```
+
 ### Tests
 
 Your project with this library is jest-ready, the only thing that you need is to add .babelrc:
