@@ -76,7 +76,7 @@ import staticRouter from './routes/static/static';
 //lib imports
 import { User } from './db';
 import passport from 'express-jwt-auth-router/util/passport';
-import { applyStrategies } from 'react-app-jwt-core/auth';
+import { applyStrategies } from 'express-jwt-auth-router/auth';
 import authRouter from 'express-jwt-auth-router/authRouter';
 
 const app = express();
