@@ -22,7 +22,9 @@ export {
 }
 ```
 
-Create your `.env` file and add `DB_URL=postgres://localhost:5432/yourapp`. 
+Create your `.env` file and add `DB_URL=postgres://localhost:5432/yourapp`.
+
+
 
 Re-import models from `express-jwt-auth-router`, which you will extend or scope or associate:
 db/index.js
