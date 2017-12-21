@@ -85,6 +85,9 @@ import authRouter from 'express-jwt-auth-router/authRouter';
 
 const app = express();
 
+//TODO: DO WE NEED TO INITIALIZE IT? AS IT WORKS ANYWAY
+//app.use(passport.initialize()); //Initialize passport 
+
 applyStrategies(passport, {
   loginQuery: User.login, //a function accepting User (from request) and returning a promise (usually db call) which should return User or throw error
   registerQuery: User.register, // (User, userRole = 'user') => Promise; a function accepting User and returning a promise (usually db call), to check if user exists, and then refister if not. Should return User or throw error
@@ -93,10 +96,25 @@ applyStrategies(passport, {
   fbProfileFields, //  facebook profile fields. By default: [ 'id', 'email', 'displayName', 'gender', 'picture', 'age_range', 'cover', 'link', 'locale', 'timezone', 'updated_time', 'verified']
 });
 
+const prefix = '/api/v1/'; //This is where you want to put your protected API
 
+//Setup bodyParser and authRouter
+app.use(prefix, bodyParser.json());
+app.use(prefix, authRouter);
+
+//Setup your application routers that must be protected
+app.use(prefix + 'stores', businessLogicRouter);
+
+//Add handlers to the end of the pipe
+app.use(prefix, jsonResultHandler);
+app.use(prefix, validationErrorHandler);
+app.use(prefix, jsonErrorHandler);
+
+//Use other routers as usual
 app.use(staticRouter);
-app.use('/api/v1/', authRouter);
-app.use('/api/v1/stores/', storesRouter);
+
+//Start your express server
+app.listen();
 
 ```
 
@@ -112,9 +130,9 @@ Create your `.env` file and add `DB_URL=postgres://localhost:5432/yourapp`. (Typ
 Also it supports:
 ```
 #Required
-JWT_SECRET=123123123 #Your JWT secret (required)
-FB_ID=1585753124796680 #FB ID
-FB_SECRET=54b40f74bd4430663804db3d2dca1520 #FB SECRET
+JWT_SECRET= #Your JWT secret (required)
+FB_ID= #FB ID (required)
+FB_SECRET= #FB SECRET (required)
 
 
 #Optional
