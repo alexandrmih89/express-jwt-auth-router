@@ -105,3 +105,14 @@ User data (request):
 To create a user with role need to use acl and set the roles in registerQuery and fbCreateUser.
 
 
+### Tests
+
+Your project with this library is jest-ready, the only thing that you need is to add .babelrc:
+
+```json
+{
+  "presets": ["env", "stage-0"]
+}
+```
+
+Then feel free to run jest or to add them to `scripts`.
