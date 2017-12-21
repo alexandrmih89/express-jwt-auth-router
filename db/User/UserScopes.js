@@ -1,22 +1,34 @@
-import User from './User';
-import Role from '../Role/Role';
-import Contact from '../Contact/Contact';
+'use strict';
 
-User.addScope('defaultScope', {
+var _User = require('./User');
+
+var _User2 = _interopRequireDefault(_User);
+
+var _Role = require('../Role/Role');
+
+var _Role2 = _interopRequireDefault(_Role);
+
+var _Contact = require('../Contact/Contact');
+
+var _Contact2 = _interopRequireDefault(_Contact);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+_User2.default.addScope('defaultScope', {
   include: [{
-    model: Role,
+    model: _Role2.default,
     as: 'roles'
   }, {
-    model: Contact,
+    model: _Contact2.default,
     as: 'contacts'
   }, {
-    model: Contact,
+    model: _Contact2.default,
     as: 'emails',
     where: {
       kind: 'email'
     },
     required: false
-  }],
+  }]
 }, {
   override: true
 });

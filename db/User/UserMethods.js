@@ -1,92 +1,176 @@
-import HttpErrors from 'http-errors';
-import _ from 'lodash';
-import bcrypt from 'bcrypt';
-import User from './User';
-import Role from '../Role/Role';
-import Contact from '../Contact/Contact';
-import UserProvider from '../UserProvider/UserProvider';
+'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-const PasswordIncorrect = () => HttpErrors.Unauthorized("Password Incorrect");
-const UserNotFound = () => HttpErrors.NotFound("User not found");
-const AlreadyTaken = () => HttpErrors.Forbidden("Username is already taken");
-const EmailNotPresent = () => HttpErrors.BadRequest("No email present");
+var _httpErrors = require('http-errors');
 
-User.findByUsername = (username) => User.findOne({ where: { username }});
+var _httpErrors2 = _interopRequireDefault(_httpErrors);
 
-User.login = (reqUser) => User.findByUsername(reqUser.username)
-  .then(user => {
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var _bcrypt = require('bcrypt');
+
+var _bcrypt2 = _interopRequireDefault(_bcrypt);
+
+var _User = require('./User');
+
+var _User2 = _interopRequireDefault(_User);
+
+var _Role = require('../Role/Role');
+
+var _Role2 = _interopRequireDefault(_Role);
+
+var _Contact = require('../Contact/Contact');
+
+var _Contact2 = _interopRequireDefault(_Contact);
+
+var _UserProvider = require('../UserProvider/UserProvider');
+
+var _UserProvider2 = _interopRequireDefault(_UserProvider);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+var PasswordIncorrect = function PasswordIncorrect() {
+  return _httpErrors2.default.Unauthorized("Password Incorrect");
+};
+var UserNotFound = function UserNotFound() {
+  return _httpErrors2.default.NotFound("User not found");
+};
+var AlreadyTaken = function AlreadyTaken() {
+  return _httpErrors2.default.Forbidden("Username is already taken");
+};
+var EmailNotPresent = function EmailNotPresent() {
+  return _httpErrors2.default.BadRequest("No email present");
+};
+
+_User2.default.findByUsername = function (username) {
+  return _User2.default.findOne({ where: { username: username } });
+};
+
+_User2.default.login = function (reqUser) {
+  return _User2.default.findByUsername(reqUser.username).then(function (user) {
     if (!user) {
       throw UserNotFound();
     }
     user.validatePassword(reqUser.password);
     return user;
   });
+};
 
-User.register = async (reqUser, userRoles = 'user') => {
-  const user = await User.findByUsername(reqUser.username);
+_User2.default.register = function () {
+  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(reqUser) {
+    var userRoles = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'user';
+    var user, roles, newUser;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            _context.next = 2;
+            return _User2.default.findByUsername(reqUser.username);
 
-  if (user) {
-    throw AlreadyTaken();
-  }
+          case 2:
+            user = _context.sent;
 
-  if (!reqUser.email) {
-    throw EmailNotPresent();
-  }
+            if (!user) {
+              _context.next = 5;
+              break;
+            }
 
-  const roles = _.isArray(userRoles) ? userRoles : [userRoles];
+            throw AlreadyTaken();
 
-  const newUser = await User.create({
-    ...reqUser,
-    roles: roles.map(role => ({ role })),
-    contacts: [{ kind: 'email', contact: reqUser.email }],
-  }, {
-    include: [ {
-      model: Role, as: 'roles'
-    }, {
-      model: Contact, as: 'contacts'
+          case 5:
+            if (reqUser.email) {
+              _context.next = 7;
+              break;
+            }
+
+            throw EmailNotPresent();
+
+          case 7:
+            roles = _lodash2.default.isArray(userRoles) ? userRoles : [userRoles];
+            _context.next = 10;
+            return _User2.default.create(_extends({}, reqUser, {
+              roles: roles.map(function (role) {
+                return { role: role };
+              }),
+              contacts: [{ kind: 'email', contact: reqUser.email }]
+            }), {
+              include: [{
+                model: _Role2.default, as: 'roles'
+              }, {
+                model: _Contact2.default, as: 'contacts'
+              }]
+            });
+
+          case 10:
+            newUser = _context.sent;
+            return _context.abrupt('return', _User2.default.findById(newUser.id));
+
+          case 12:
+          case 'end':
+            return _context.stop();
+        }
+      }
+    }, _callee, undefined);
+  }));
+
+  return function (_x) {
+    return _ref.apply(this, arguments);
+  };
+}();
+
+_User2.default.facebookQuery = function (fbProfile) {
+  return _User2.default.findOne({
+    include: [{
+      model: _UserProvider2.default,
+      as: 'authProviders',
+      required: true,
+      where: {
+        identifier: fbProfile.id
+      }
     }]
   });
-  return User.findById(newUser.id);
 };
 
-User.facebookQuery = (fbProfile) => User.findOne({
-  include: [{
-    model: UserProvider,
-    as: 'authProviders',
-    required: true,
-    where: {
-      identifier: fbProfile.id
-    }
-  }]
-});
+_User2.default.facebookCreate = function (fbProfile) {
+  var facebookRole = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'user';
 
-User.facebookCreate = (fbProfile, facebookRole = 'user') => {
-  return User.create({
+  return _User2.default.create({
     username: fbProfile.email || fbProfile.emails[0]
-  })
-    .then(user =>
-      UserProvider.create({ identifier: fbProfile.id, provider: 'facebook' })
-        .then(authProvider => user.addAuthProvider(authProvider))
-        .then(() => _.isArray(facebookRole) ? user.addRole(facebookRole) : user.addRoles(facebookRole))
-    )
-    .then(() => User.findById(user.id));
+  }).then(function (user) {
+    return _UserProvider2.default.create({ identifier: fbProfile.id, provider: 'facebook' }).then(function (authProvider) {
+      return user.addAuthProvider(authProvider);
+    }).then(function () {
+      return _lodash2.default.isArray(facebookRole) ? user.addRole(facebookRole) : user.addRoles(facebookRole);
+    });
+  }).then(function () {
+    return _User2.default.findById(user.id);
+  });
 };
 
-User.prototype.validatePassword = function (password) {
-  if (!bcrypt.compareSync(password, this.password)) {
+_User2.default.prototype.validatePassword = function (password) {
+  if (!_bcrypt2.default.compareSync(password, this.password)) {
     throw PasswordIncorrect();
   }
 };
 
-User.prototype.toJSON = function () {
-  const user = this.get();
-  return {
-    ...user,
+_User2.default.prototype.toJSON = function () {
+  var user = this.get();
+  return _extends({}, user, {
     //TODO: optimize query?
-    roles: user.roles.map(({ role }) => role ),
-    emails: user.emails.map(({ contact }) => contact ),
+    roles: user.roles.map(function (_ref2) {
+      var role = _ref2.role;
+      return role;
+    }),
+    emails: user.emails.map(function (_ref3) {
+      var contact = _ref3.contact;
+      return contact;
+    }),
     password: undefined,
     authProviders: undefined
-  };
+  });
 };

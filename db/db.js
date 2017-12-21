@@ -1,10 +1,19 @@
-import Sequelize from 'sequelize';
-import '../util/dotenv';
+'use strict';
 
-const db = new Sequelize(process.env.DB_URL);
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Sequelize = undefined;
 
-export default db;
+var _sequelize = require('sequelize');
 
-export {
-  Sequelize
-};
+var _sequelize2 = _interopRequireDefault(_sequelize);
+
+require('../util/dotenv');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var db = new _sequelize2.default(process.env.DB_URL);
+
+exports.default = db;
+exports.Sequelize = _sequelize2.default;

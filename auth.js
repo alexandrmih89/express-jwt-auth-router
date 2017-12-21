@@ -1,42 +1,68 @@
-import LocalStrategy from 'passport-local';
-import FacebookTokenStrategy from 'passport-facebook-token';
-import acl from './ACL';
-import './util/dotenv';
+'use strict';
 
-const fbId = process.env.FB_ID;
-const fbSecret = process.env.FB_SECRET;
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.signOut = exports.signIn = exports.authenticate = exports.applyStrategies = exports.generateRefreshToken = exports.generateAccessToken = undefined;
 
-const localStrategy = (verifyCallback) => new LocalStrategy({
-  usernameField : 'username',
-  passwordField : 'password',
-  passReqToCallback : true // allows us to pass back the entire request to the callback
-}, verifyCallback);
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-const signinStrategy = (loginQuery) => (req, username, password, done) => {
-  loginQuery(req.body)
-    .then(user => done(null, { ...user.toJSON(), provider: 'password' }))
-    .catch(done);
+var _passportLocal = require('passport-local');
+
+var _passportLocal2 = _interopRequireDefault(_passportLocal);
+
+var _passportFacebookToken = require('passport-facebook-token');
+
+var _passportFacebookToken2 = _interopRequireDefault(_passportFacebookToken);
+
+var _ACL = require('./ACL');
+
+var _ACL2 = _interopRequireDefault(_ACL);
+
+require('./util/dotenv');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var fbId = process.env.FB_ID;
+var fbSecret = process.env.FB_SECRET;
+
+var localStrategy = function localStrategy(verifyCallback) {
+  return new _passportLocal2.default({
+    usernameField: 'username',
+    passwordField: 'password',
+    passReqToCallback: true // allows us to pass back the entire request to the callback
+  }, verifyCallback);
 };
 
-const signupStrategy = (registerQuery) => (req, username, password, done) => {
-  registerQuery(req.body)
-    .then(user => done(null, { ...user.toJSON(), provider: 'password', firstLogin: true }))
-    .catch(done);
+var signinStrategy = function signinStrategy(loginQuery) {
+  return function (req, username, password, done) {
+    loginQuery(req.body).then(function (user) {
+      return done(null, _extends({}, user.toJSON(), { provider: 'password' }));
+    }).catch(done);
+  };
 };
 
-export const generateAccessToken = (req, res, next) => {
+var signupStrategy = function signupStrategy(registerQuery) {
+  return function (req, username, password, done) {
+    registerQuery(req.body).then(function (user) {
+      return done(null, _extends({}, user.toJSON(), { provider: 'password', firstLogin: true }));
+    }).catch(done);
+  };
+};
+
+var generateAccessToken = exports.generateAccessToken = function generateAccessToken(req, res, next) {
   try {
     //TODO: GET USER FROM DATABASE
-    req.accessToken = acl.signAccessToken(req);
+    req.accessToken = _ACL2.default.signAccessToken(req);
     next();
   } catch (e) {
     next(e);
   }
 };
 
-export const generateRefreshToken = (req, res, next) => {
+var generateRefreshToken = exports.generateRefreshToken = function generateRefreshToken(req, res, next) {
   try {
-    req.refreshToken = acl.signRefreshToken(req);
+    req.refreshToken = _ACL2.default.signRefreshToken(req);
     next();
   } catch (e) {
     next(e);
@@ -44,56 +70,52 @@ export const generateRefreshToken = (req, res, next) => {
 };
 
 //TODO: reset access from facebook
-const facebookStrategy = (profileFields, fbUserQuery, fbCreateUser) => {
-  return new FacebookTokenStrategy({
-      clientID: fbId,
-      clientSecret: fbSecret,
-      profileFields,
-      passReqToCallback: true
-    }, (req, facebookAccessToken, facebookRefreshToken, fbProfile, done) => {
-      fbUserQuery(fbProfile._json, req)
-        .then(user => {
-          if (user) {
-            return user.toJSON();
-          }
-          return fbCreateUser(fbProfile._json, req)
-            .then(user => ({ ...user.toJSON(), firstLogin: true }));
-        })
-        .then(user => {
-          done(null, { ...user, provider: 'facebook' });
-        })
-        .catch(error => done(error, null));
-    }
-  );
+var facebookStrategy = function facebookStrategy(profileFields, fbUserQuery, fbCreateUser) {
+  return new _passportFacebookToken2.default({
+    clientID: fbId,
+    clientSecret: fbSecret,
+    profileFields: profileFields,
+    passReqToCallback: true
+  }, function (req, facebookAccessToken, facebookRefreshToken, fbProfile, done) {
+    fbUserQuery(fbProfile._json, req).then(function (user) {
+      if (user) {
+        return user.toJSON();
+      }
+      return fbCreateUser(fbProfile._json, req).then(function (user) {
+        return _extends({}, user.toJSON(), { firstLogin: true });
+      });
+    }).then(function (user) {
+      done(null, _extends({}, user, { provider: 'facebook' }));
+    }).catch(function (error) {
+      return done(error, null);
+    });
+  });
 };
 
-export const applyStrategies = (passport, {
-  loginQuery,
-  registerQuery,
-  fbProfileFields,
-  fbUserQuery,
-  fbCreateUser
-}) => {
+var applyStrategies = exports.applyStrategies = function applyStrategies(passport, _ref) {
+  var loginQuery = _ref.loginQuery,
+      registerQuery = _ref.registerQuery,
+      fbProfileFields = _ref.fbProfileFields,
+      fbUserQuery = _ref.fbUserQuery,
+      fbCreateUser = _ref.fbCreateUser;
+
 
   passport.use('local-login', localStrategy(signinStrategy(loginQuery)));
 
   passport.use('local-signup', localStrategy(signupStrategy(registerQuery)));
 
-  const profileFields = fbProfileFields || [
-    'id',
-    'email',
-    'displayName',
-    'gender',
-    'picture',
-    'age_range',
-    'cover', 'link', 'locale', 'timezone', 'updated_time', 'verified'];
+  var profileFields = fbProfileFields || ['id', 'email', 'displayName', 'gender', 'picture', 'age_range', 'cover', 'link', 'locale', 'timezone', 'updated_time', 'verified'];
 
-  passport.use('facebook-token', facebookStrategy(profileFields, fbUserQuery, fbCreateUser))
+  passport.use('facebook-token', facebookStrategy(profileFields, fbUserQuery, fbCreateUser));
 };
 
-export const authenticate = (passport) => (strategy) => passport.authenticate(strategy, { session: false });
+var authenticate = exports.authenticate = function authenticate(passport) {
+  return function (strategy) {
+    return passport.authenticate(strategy, { session: false });
+  };
+};
 
-export const signIn = (req, res, next) => {
+var signIn = exports.signIn = function signIn(req, res, next) {
   res.result = {
     user: req.user,
     accessToken: req.accessToken,
@@ -102,7 +124,7 @@ export const signIn = (req, res, next) => {
   next();
 };
 
-export const signOut = (req, res, next) => {
+var signOut = exports.signOut = function signOut(req, res, next) {
   //TODO: revoke all tokens iat before for this user and device
   res.result = {
     message: "Signed out successfully"

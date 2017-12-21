@@ -1,30 +1,36 @@
-import { ValidationError } from 'sequelize/lib/errors/index';
+'use strict';
 
-export const jsonResultHandler = (req, res, next) => {
-  if(res.result) {
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.jsonErrorHandler = exports.validationErrorHandler = exports.jsonResultHandler = undefined;
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _index = require('sequelize/lib/errors/index');
+
+var jsonResultHandler = exports.jsonResultHandler = function jsonResultHandler(req, res, next) {
+  if (res.result) {
     res.json(res.result);
   }
 };
 
-export const validationErrorHandler = (err, req, res, next) => {
-  if (err instanceof ValidationError) {
+var validationErrorHandler = exports.validationErrorHandler = function validationErrorHandler(err, req, res, next) {
+  if (err instanceof _index.ValidationError) {
     err.statusCode = 400;
   }
   next(err);
 };
 
-export const jsonErrorHandler = (err, req, res, next) => {
+var jsonErrorHandler = exports.jsonErrorHandler = function jsonErrorHandler(err, req, res, next) {
   if (err) {
-    const status = err.statusCode || err.status || 500;
+    var status = err.statusCode || err.status || 500;
     console.error(err);
-    res
-      .status(status)
-      .json({
-        ...err,
-        message: err.message,
-        type: err.name,
-        status,
-      });
+    res.status(status).json(_extends({}, err, {
+      message: err.message,
+      type: err.name,
+      status: status
+    }));
   }
   next();
 };
