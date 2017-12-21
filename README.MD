@@ -126,6 +126,7 @@ To create a user with role need to use acl and set the roles in registerQuery an
 ### Configuration
 
 Create your `.env` file and add `DB_URL=postgres://localhost:5432/yourapp`. (Typical DB URL (See Sequelize docs))
+Create `.env.development` and `env.test` for those particular environments.
 
 Also it supports:
 ```
