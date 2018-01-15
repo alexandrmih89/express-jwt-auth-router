@@ -29,7 +29,7 @@ Create your `.env` file and add `DB_URL=postgres://localhost:5432/yourapp`.
 Re-import models from `express-jwt-auth-router`, which you will extend or scope or associate:
 db/index.js
 ```javascript
-import User from 'express-jwt-auth-router/db/User'; //lib model
+import { User } from 'express-jwt-auth-router/db'; //lib model
 import UserInfo from './UserInfo'; //custom model associated with User
 import File from './File'; //custom model
 
@@ -39,6 +39,8 @@ export {
   File
 }
 ```
+See model customization chapter.
+
 
 configure protected routers (Use ACL)
 ```javascript
@@ -91,8 +93,8 @@ const app = express();
 applyStrategies(passport, {
   loginQuery: User.login, //a function accepting User (from request) and returning a promise (usually db call) which should return User or throw error
   registerQuery: User.register, // (User, userRole = 'user') => Promise; a function accepting User and returning a promise (usually db call), to check if user exists, and then refister if not. Should return User or throw error
-  fbUserQuery: User.checkFBUser, // accepts fbProfile._json, returns a Promise with user formatted (usually db call), or null if nothing found. Should omit password and other sensitive data.
-  fbCreateUser: User.createFBUser, // (User, userRole = 'user') => Promise; creates FB profile user
+  fbUserQuery: User.facebookQuery, // accepts fbProfile._json, returns a Promise with user formatted (usually db call), or null if nothing found. Should omit password and other sensitive data.
+  fbCreateUser: User.facebookCreate, // (User, userRole = 'user') => Promise; creates FB profile user
   fbProfileFields, //  facebook profile fields. By default: [ 'id', 'email', 'displayName', 'gender', 'picture', 'age_range', 'cover', 'link', 'locale', 'timezone', 'updated_time', 'verified']
 });
 
@@ -122,6 +124,44 @@ User data (request):
 
 To create a user with role need to use acl and set the roles in registerQuery and fbCreateUser.
 
+### Model customization
+
+If you need to add association to default scope, you'll need to override defaultScope.
+
+```javascript
+import { User, Role, Contact } from 'express-jwt-auth-router/db'; //lib model
+import UserInfo from './UserInfo'; //custom model
+
+User.hasOne(UserInfo);
+User.addScope('defaultScope', {
+  include: [{
+    model: Role,
+    as: 'roles'
+  }, {
+    model: Contact,
+    as: 'contacts'
+  }, {
+    model: Contact,
+    as: 'emails',
+    where: {
+      kind: 'email'
+    },
+    required: false
+  }, {
+    model: UserInfo
+  }],
+}, {
+  override: true
+});
+
+export {
+  User,
+  Role,
+  Contact,
+  UserInfo
+}
+```
+After that always import your modified models from this file, not from library.
 
 ### Configuration
 
@@ -131,6 +171,7 @@ Create `.env.development` and `env.test` for those particular environments.
 Also it supports:
 ```
 #Required
+DB_URL=postgres://localhost:5432/yourappdb
 JWT_SECRET= #Your JWT secret (required)
 FB_ID= #FB ID (required)
 FB_SECRET= #FB SECRET (required)
@@ -151,4 +192,7 @@ Your project with this library is jest-ready, the only thing that you need is to
 }
 ```
 
-Then feel free to run jest or to add them to `scripts`.
+Then feel free to run `jest` or to add them to `package.json` scripts.
+
+Use `.env.test` for test environment configuration.
+
