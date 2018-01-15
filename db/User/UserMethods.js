@@ -63,7 +63,6 @@ _User2.default.login = function (reqUser) {
 
 _User2.default.register = function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(reqUser) {
-    var userRoles = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'user';
     var user, roles, newUser;
     return regeneratorRuntime.wrap(function _callee$(_context) {
       while (1) {
@@ -136,21 +135,44 @@ _User2.default.facebookQuery = function (fbProfile) {
   });
 };
 
-_User2.default.facebookCreate = function (fbProfile) {
-  var facebookRole = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'user';
+_User2.default.facebookCreate = function () {
+  var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(fbProfile) {
+    var user;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            _context2.next = 2;
+            return _User2.default.create({
+              username: fbProfile.email || fbProfile.emails[0]
+            });
 
-  return _User2.default.create({
-    username: fbProfile.email || fbProfile.emails[0]
-  }).then(function (user) {
-    return _UserProvider2.default.create({ identifier: fbProfile.id, provider: 'facebook' }).then(function (authProvider) {
-      return user.addAuthProvider(authProvider);
-    }).then(function () {
-      return _lodash2.default.isArray(facebookRole) ? user.addRole(facebookRole) : user.addRoles(facebookRole);
-    });
-  }).then(function () {
-    return _User2.default.findById(user.id);
-  });
-};
+          case 2:
+            user = _context2.sent;
+            _context2.next = 5;
+            return _UserProvider2.default.create({ identifier: fbProfile.id, provider: 'facebook' }).then(function (authProvider) {
+              return user.addAuthProvider(authProvider);
+            });
+
+          case 5:
+            _context2.next = 7;
+            return _lodash2.default.isArray(facebookRole) ? user.addRole(facebookRole) : user.addRoles(facebookRole);
+
+          case 7:
+            return _context2.abrupt('return', _User2.default.findById(user.id));
+
+          case 8:
+          case 'end':
+            return _context2.stop();
+        }
+      }
+    }, _callee2, undefined);
+  }));
+
+  return function (_x2) {
+    return _ref2.apply(this, arguments);
+  };
+}();
 
 _User2.default.prototype.validatePassword = function (password) {
   if (!_bcrypt2.default.compareSync(password, this.password)) {
@@ -162,12 +184,12 @@ _User2.default.prototype.toJSON = function () {
   var user = this.get();
   return _extends({}, user, {
     //TODO: optimize query?
-    roles: user.roles.map(function (_ref2) {
-      var role = _ref2.role;
+    roles: user.roles.map(function (_ref3) {
+      var role = _ref3.role;
       return role;
     }),
-    emails: user.emails.map(function (_ref3) {
-      var contact = _ref3.contact;
+    emails: user.emails.map(function (_ref4) {
+      var contact = _ref4.contact;
       return contact;
     }),
     password: undefined,

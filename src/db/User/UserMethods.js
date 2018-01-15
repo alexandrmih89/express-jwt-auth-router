@@ -23,7 +23,7 @@ User.login = (reqUser) => User.findByUsername(reqUser.username)
     return user;
   });
 
-User.register = async (reqUser, userRoles = 'user') => {
+User.register = async (reqUser) => {
   const user = await User.findByUsername(reqUser.username);
 
   if (user) {
@@ -61,16 +61,16 @@ User.facebookQuery = (fbProfile) => User.findOne({
   }]
 });
 
-User.facebookCreate = (fbProfile, facebookRole = 'user') => {
-  return User.create({
+User.facebookCreate = async (fbProfile) => {
+  const user = await User.create({
     username: fbProfile.email || fbProfile.emails[0]
-  })
-    .then(user =>
-      UserProvider.create({ identifier: fbProfile.id, provider: 'facebook' })
-        .then(authProvider => user.addAuthProvider(authProvider))
-        .then(() => _.isArray(facebookRole) ? user.addRole(facebookRole) : user.addRoles(facebookRole))
-    )
-    .then(() => User.findById(user.id));
+  });
+  await UserProvider.create({ identifier: fbProfile.id, provider: 'facebook' })
+    .then(authProvider => user.addAuthProvider(authProvider));
+
+  await (_.isArray(facebookRole) ? user.addRole(facebookRole) : user.addRoles(facebookRole));
+
+  return User.findById(user.id);
 };
 
 User.prototype.validatePassword = function (password) {
