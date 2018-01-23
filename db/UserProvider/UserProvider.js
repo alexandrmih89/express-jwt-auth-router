@@ -30,6 +30,8 @@ var UserProvider = _db2.default.define('user_provider', {
       notEmpty: true
     }
   }
+}, {
+  paranoid: true
 });
 
 exports.default = UserProvider;

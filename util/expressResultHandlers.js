@@ -13,6 +13,7 @@ var jsonResultHandler = exports.jsonResultHandler = function jsonResultHandler(r
   if (res.result) {
     res.json(res.result);
   }
+  console.warn('jsonResultHandler: result not defined');
 };
 
 var validationErrorHandler = exports.validationErrorHandler = function validationErrorHandler(err, req, res, next) {
