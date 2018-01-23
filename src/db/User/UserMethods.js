@@ -6,6 +6,8 @@ import Role from '../Role/Role';
 import Contact from '../Contact/Contact';
 import UserProvider from '../UserProvider/UserProvider';
 
+const userRoles = 'user';
+const facebookRole = 'user';
 
 const PasswordIncorrect = () => HttpErrors.Unauthorized("Password Incorrect");
 const UserNotFound = () => HttpErrors.NotFound("User not found");
