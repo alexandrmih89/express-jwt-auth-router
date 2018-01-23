@@ -4,6 +4,7 @@ export const jsonResultHandler = (req, res, next) => {
   if(res.result) {
     res.json(res.result);
   }
+  console.warn('jsonResultHandler: result not defined');
 };
 
 export const validationErrorHandler = (err, req, res, next) => {
