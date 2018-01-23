@@ -17,6 +17,8 @@ const UserProvider = db.define('user_provider', {
       notEmpty: true
     }
   }
+}, {
+  paranoid: true,
 });
 
 export default UserProvider;
