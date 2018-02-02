@@ -101,18 +101,24 @@ _User2.default.register = function () {
               }),
               contacts: [{ kind: 'email', contact: reqUser.email }]
             }), {
-              include: [{
-                model: _Role2.default, as: 'roles'
-              }, {
+              include: [, /*{
+                          model: Role, as: 'roles'
+                          }*/{
                 model: _Contact2.default, as: 'contacts'
               }]
             });
 
           case 10:
             newUser = _context.sent;
+            _context.next = 13;
+            return newUser.setRoles(roles.map(function (role) {
+              return { role: role };
+            }));
+
+          case 13:
             return _context.abrupt('return', _User2.default.findById(newUser.id));
 
-          case 12:
+          case 14:
           case 'end':
             return _context.stop();
         }
