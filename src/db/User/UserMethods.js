@@ -43,12 +43,15 @@ User.register = async (reqUser) => {
     roles: roles.map(role => ({ role })),
     contacts: [{ kind: 'email', contact: reqUser.email }],
   }, {
-    include: [ {
-      model: Role, as: 'roles'
-    }, {
+    include: [/*{
+     model: Role, as: 'roles'
+     }*/, {
       model: Contact, as: 'contacts'
     }]
   });
+
+  await newUser.setRoles(roles.map(role => ({ role })));
+
   return User.findById(newUser.id);
 };
 
