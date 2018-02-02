@@ -1,13 +1,15 @@
 import HttpErrors from 'http-errors';
 import _ from 'lodash';
 import bcrypt from 'bcrypt';
+import db, { Sequelize } from '../db';
 import User from './User';
 import Role from '../Role/Role';
 import Contact from '../Contact/Contact';
 import UserProvider from '../UserProvider/UserProvider';
+const Op = db.Op;
 
 const userRoles = 'user';
-const facebookRole = 'user';
+const facebookRoles = 'user';
 
 const PasswordIncorrect = () => HttpErrors.Unauthorized("Password Incorrect");
 const UserNotFound = () => HttpErrors.NotFound("User not found");
@@ -40,17 +42,14 @@ User.register = async (reqUser) => {
 
   const newUser = await User.create({
     ...reqUser,
-    roles: roles.map(role => ({ role })),
     contacts: [{ kind: 'email', contact: reqUser.email }],
   }, {
-    include: [/*{
-     model: Role, as: 'roles'
-     }*/, {
+    include: [{
       model: Contact, as: 'contacts'
     }]
   });
 
-  await newUser.setRoles(roles.map(role => ({ role })));
+  await Role.addRolesToUser(roles, newUser);
 
   return User.findById(newUser.id);
 };
@@ -67,13 +66,24 @@ User.facebookQuery = (fbProfile) => User.findOne({
 });
 
 User.facebookCreate = async (fbProfile) => {
+
+  const email = fbProfile.email || fbProfile.emails[0];
+
+  const roles = _.isArray(facebookRoles) ? facebookRoles : [facebookRoles];
+
   const user = await User.create({
-    username: fbProfile.email || fbProfile.emails[0]
+    username: email,
+    contacts: [{ kind: 'email', contact: email }],
+  }, {
+    include: [{
+      model: Contact, as: 'contacts'
+    }]
   });
+
+  await Role.addRolesToUser(roles, user);
+
   await UserProvider.create({ identifier: fbProfile.id, provider: 'facebook' })
     .then(authProvider => user.addAuthProvider(authProvider));
-
-  await (_.isArray(facebookRole) ? user.addRole(facebookRole) : user.addRoles(facebookRole));
 
   return User.findById(user.id);
 };

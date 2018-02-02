@@ -13,4 +13,14 @@ const Role = db.define('role', {
   }
 }, { paranoid: true });
 
+Role.addRolesToUser = (roles = [], user) => {
+  return Role.findAll({
+    where: {
+      role: {
+        [Sequelize.Op.in]: roles
+      }
+    }
+  }).then(roles => user.addRoles(roles));
+};
+
 export default Role;

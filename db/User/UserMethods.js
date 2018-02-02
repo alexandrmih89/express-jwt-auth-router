@@ -14,6 +14,10 @@ var _bcrypt = require('bcrypt');
 
 var _bcrypt2 = _interopRequireDefault(_bcrypt);
 
+var _db = require('../db');
+
+var _db2 = _interopRequireDefault(_db);
+
 var _User = require('./User');
 
 var _User2 = _interopRequireDefault(_User);
@@ -34,8 +38,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
+var Op = _db2.default.Op;
+
 var userRoles = 'user';
-var facebookRole = 'user';
+var facebookRoles = 'user';
 
 var PasswordIncorrect = function PasswordIncorrect() {
   return _httpErrors2.default.Unauthorized("Password Incorrect");
@@ -96,14 +102,9 @@ _User2.default.register = function () {
             roles = _lodash2.default.isArray(userRoles) ? userRoles : [userRoles];
             _context.next = 10;
             return _User2.default.create(_extends({}, reqUser, {
-              roles: roles.map(function (role) {
-                return { role: role };
-              }),
               contacts: [{ kind: 'email', contact: reqUser.email }]
             }), {
-              include: [, /*{
-                          model: Role, as: 'roles'
-                          }*/{
+              include: [{
                 model: _Contact2.default, as: 'contacts'
               }]
             });
@@ -111,9 +112,7 @@ _User2.default.register = function () {
           case 10:
             newUser = _context.sent;
             _context.next = 13;
-            return newUser.setRoles(roles.map(function (role) {
-              return { role: role };
-            }));
+            return _Role2.default.addRolesToUser(roles, newUser);
 
           case 13:
             return _context.abrupt('return', _User2.default.findById(newUser.id));
@@ -146,31 +145,38 @@ _User2.default.facebookQuery = function (fbProfile) {
 
 _User2.default.facebookCreate = function () {
   var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(fbProfile) {
-    var user;
+    var email, roles, user;
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
-            _context2.next = 2;
+            email = fbProfile.email || fbProfile.emails[0];
+            roles = _lodash2.default.isArray(facebookRoles) ? facebookRoles : [facebookRoles];
+            _context2.next = 4;
             return _User2.default.create({
-              username: fbProfile.email || fbProfile.emails[0]
+              username: email,
+              contacts: [{ kind: 'email', contact: email }]
+            }, {
+              include: [{
+                model: _Contact2.default, as: 'contacts'
+              }]
             });
 
-          case 2:
+          case 4:
             user = _context2.sent;
-            _context2.next = 5;
+            _context2.next = 7;
+            return _Role2.default.addRolesToUser(roles, user);
+
+          case 7:
+            _context2.next = 9;
             return _UserProvider2.default.create({ identifier: fbProfile.id, provider: 'facebook' }).then(function (authProvider) {
               return user.addAuthProvider(authProvider);
             });
 
-          case 5:
-            _context2.next = 7;
-            return _lodash2.default.isArray(facebookRole) ? user.addRole(facebookRole) : user.addRoles(facebookRole);
-
-          case 7:
+          case 9:
             return _context2.abrupt('return', _User2.default.findById(user.id));
 
-          case 8:
+          case 10:
           case 'end':
             return _context2.stop();
         }

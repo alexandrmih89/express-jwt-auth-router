@@ -12,8 +12,10 @@ var _index = require('sequelize/lib/errors/index');
 var jsonResultHandler = exports.jsonResultHandler = function jsonResultHandler(req, res, next) {
   if (res.result) {
     res.json(res.result);
+  } else {
+    console.warn('jsonResultHandler: result not defined');
   }
-  console.warn('jsonResultHandler: result not defined');
+  next();
 };
 
 var validationErrorHandler = exports.validationErrorHandler = function validationErrorHandler(err, req, res, next) {
