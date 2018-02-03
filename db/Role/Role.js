@@ -39,6 +39,13 @@ Role.addRolesToUser = function () {
     where: {
       role: _defineProperty({}, _sequelize2.default.Op.in, roles)
     }
+  }).then(function (dbRoles) {
+    if (!dbRoles.length) {
+      dbRoles = Promise.all(roles.map(function (role) {
+        return Role.create({ role: role });
+      }));
+    }
+    return dbRoles;
   }).then(function (roles) {
     return user.addRoles(roles);
   });

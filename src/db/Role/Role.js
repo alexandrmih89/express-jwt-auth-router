@@ -20,7 +20,14 @@ Role.addRolesToUser = (roles = [], user) => {
         [Sequelize.Op.in]: roles
       }
     }
-  }).then(roles => user.addRoles(roles));
+  })
+    .then(dbRoles => {
+      if(!dbRoles.length) {
+        dbRoles = Promise.all(roles.map(role => Role.create({ role })));
+      }
+      return dbRoles;
+    })
+    .then(roles => user.addRoles(roles));
 };
 
 export default Role;

@@ -23,13 +23,11 @@ describe("Association tests", () => {
     user = await User.register(userData);
   });
 
-  it("User should have roles, emails and profile in default scope", async (done) => {
+  it("User should have roles, emails and profile in default scope", async () => {
 
     const userWithRoles = await User.findById(user.id);
 
     expect(userWithRoles.toJSON()).toMatchObject(expectedObject);
-
-    done();
   });
 
 
