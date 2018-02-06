@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _acl = require('acl');
 
 var _acl2 = _interopRequireDefault(_acl);
@@ -31,6 +33,8 @@ var _combine2 = _interopRequireDefault(_combine);
 require('./util/dotenv');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
 var jwtSecret = process.env.JWT_SECRET;
 
@@ -121,13 +125,13 @@ function signToken(req, type, expiresIn) {
       id = _req$user.id,
       provider = _req$user.provider,
       roles = _req$user.roles,
-      device = _req$user.device;
-
+      device = _req$user.device,
+      user = _objectWithoutProperties(_req$user, ['id', 'provider', 'roles', 'device']);
 
   if (!id || !provider || !roles) {
     throw signatureNotComplete();
   }
 
   //TODO: api?
-  return _jsonwebtoken2.default.sign({ id: id, provider: provider, roles: roles, device: device, type: type }, jwtSecret, expiresIn ? { expiresIn: expiresIn } : {});
+  return _jsonwebtoken2.default.sign(_extends({ id: id, provider: provider, roles: roles, device: device, type: type }, user), jwtSecret, expiresIn ? { expiresIn: expiresIn } : {});
 }
