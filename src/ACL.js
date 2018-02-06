@@ -85,12 +85,12 @@ function signRefreshToken(req) {
 }
 
 function signToken(req, type, expiresIn) {
-  const { id, provider, roles, device } = req.user;
+  const { id, provider, roles, device, ...user } = req.user;
 
   if(!id || !provider || !roles) {
     throw signatureNotComplete();
   }
 
   //TODO: api?
-  return jwt.sign({ id, provider, roles, device, type }, jwtSecret, expiresIn ? { expiresIn } : {});
+  return jwt.sign({ id, provider, roles, device, type, ...user }, jwtSecret, expiresIn ? { expiresIn } : {});
 }
