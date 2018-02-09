@@ -126,12 +126,13 @@ function signToken(req, type, expiresIn) {
       provider = _req$user.provider,
       roles = _req$user.roles,
       device = _req$user.device,
-      user = _objectWithoutProperties(_req$user, ['id', 'provider', 'roles', 'device']);
+      iat = _req$user.iat,
+      user = _objectWithoutProperties(_req$user, ['id', 'provider', 'roles', 'device', 'iat']);
 
   if (!id || !provider || !roles) {
     throw signatureNotComplete();
   }
 
   //TODO: api?
-  return _jsonwebtoken2.default.sign(_extends({ id: id, provider: provider, roles: roles, device: device, type: type }, user), jwtSecret, expiresIn ? { expiresIn: expiresIn } : {});
+  return _jsonwebtoken2.default.sign(_extends({}, user, { id: id, provider: provider, roles: roles, device: device, type: type }), jwtSecret, expiresIn ? { expiresIn: expiresIn } : {});
 }
