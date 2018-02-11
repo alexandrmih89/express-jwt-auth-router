@@ -1,12 +1,9 @@
-import express from 'express';
-import expressJWT from 'express-jwt';
-import bodyParser from 'body-parser';
-import { jsonErrorHandler, jsonResultHandler, validationErrorHandler } from './expressResultHandlers';
+const express = require('express');
+const expressJWT = require('express-jwt');
+const bodyParser = require('body-parser');
+const { jsonErrorHandler, jsonResultHandler, validationErrorHandler } = require('./expressResultHandlers');
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.prepareTest = prepareTest;
+module.exports.prepareTest = prepareTest;
 
 function prepareTest(router) {
   const app = express();
