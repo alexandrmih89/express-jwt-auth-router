@@ -1,17 +1,18 @@
-import express from 'express';
-import HttpErrors from 'http-errors';
-import passport from './util/passport';
-import bodyParser from 'body-parser';
-import request from 'supertest';
-import db from './db/db';
-import acl from './ACL';
-import authRouter from './authRouter';
-import { applyStrategies } from './auth';
-import {
+const express = require('express');
+const HttpErrors = require('http-errors');
+const passport = require('./util/passport');
+const bodyParser = require('body-parser');
+const request = require('supertest');
+const db = require('./db/db');
+const acl = require('./ACL');
+const authRouter = require('./authRouter');
+const { applyStrategies } = require('./auth');
+const handlers = require('./util/expressResultHandlers');
+const {
   jsonResultHandler,
   jsonErrorHandler,
   validationErrorHandler
-} from './util/expressResultHandlers';
+} = handlers;
 
 
 const user = {

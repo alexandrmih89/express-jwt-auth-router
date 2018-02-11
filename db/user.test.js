@@ -1,4 +1,5 @@
-import db, { User, Role } from './index';
+const db = require('./index');
+const { User, Role } = db;
 
 describe("Auth router tests", () => {
 

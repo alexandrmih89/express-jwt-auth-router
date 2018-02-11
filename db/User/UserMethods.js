@@ -1,213 +1,108 @@
-'use strict';
+const HttpErrors = require('http-errors');
+const _ = require('lodash');
+const bcrypt = require('bcrypt');
+const db = require('../db');
+const Sequelize = db.Sequelize;
+const User = require('./User');
+const Role = require('../Role/Role');
+const Contact = require('../Contact/Contact');
+const UserProvider = require('../UserProvider/UserProvider');
+const Op = db.Op;
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+const userRoles = 'user';
+const facebookRoles = 'user';
 
-var _httpErrors = require('http-errors');
+const PasswordIncorrect = () => HttpErrors.Unauthorized("Password Incorrect");
+const UserNotFound = () => HttpErrors.NotFound("User not found");
+const AlreadyTaken = () => HttpErrors.Forbidden("Username is already taken");
+const EmailNotPresent = () => HttpErrors.BadRequest("No email present");
 
-var _httpErrors2 = _interopRequireDefault(_httpErrors);
+User.findByUsername = (username) => User.findOne({ where: { username }});
 
-var _lodash = require('lodash');
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
-var _bcrypt = require('bcrypt');
-
-var _bcrypt2 = _interopRequireDefault(_bcrypt);
-
-var _db = require('../db');
-
-var _db2 = _interopRequireDefault(_db);
-
-var _User = require('./User');
-
-var _User2 = _interopRequireDefault(_User);
-
-var _Role = require('../Role/Role');
-
-var _Role2 = _interopRequireDefault(_Role);
-
-var _Contact = require('../Contact/Contact');
-
-var _Contact2 = _interopRequireDefault(_Contact);
-
-var _UserProvider = require('../UserProvider/UserProvider');
-
-var _UserProvider2 = _interopRequireDefault(_UserProvider);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-var Op = _db2.default.Op;
-
-var userRoles = 'user';
-var facebookRoles = 'user';
-
-var PasswordIncorrect = function PasswordIncorrect() {
-  return _httpErrors2.default.Unauthorized("Password Incorrect");
-};
-var UserNotFound = function UserNotFound() {
-  return _httpErrors2.default.NotFound("User not found");
-};
-var AlreadyTaken = function AlreadyTaken() {
-  return _httpErrors2.default.Forbidden("Username is already taken");
-};
-var EmailNotPresent = function EmailNotPresent() {
-  return _httpErrors2.default.BadRequest("No email present");
-};
-
-_User2.default.findByUsername = function (username) {
-  return _User2.default.findOne({ where: { username: username } });
-};
-
-_User2.default.login = function (reqUser) {
-  return _User2.default.findByUsername(reqUser.username).then(function (user) {
+User.login = (reqUser) => User.findByUsername(reqUser.username)
+  .then(user => {
     if (!user) {
       throw UserNotFound();
     }
     user.validatePassword(reqUser.password);
     return user;
   });
-};
 
-_User2.default.register = function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(reqUser) {
-    var user, roles, newUser;
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            _context.next = 2;
-            return _User2.default.findByUsername(reqUser.username);
+User.register = async (reqUser) => {
+  const user = await User.findByUsername(reqUser.username);
 
-          case 2:
-            user = _context.sent;
+  if (user) {
+    throw AlreadyTaken();
+  }
 
-            if (!user) {
-              _context.next = 5;
-              break;
-            }
+  if (!reqUser.email) {
+    throw EmailNotPresent();
+  }
 
-            throw AlreadyTaken();
+  const roles = _.isArray(userRoles) ? userRoles : [userRoles];
 
-          case 5:
-            if (reqUser.email) {
-              _context.next = 7;
-              break;
-            }
-
-            throw EmailNotPresent();
-
-          case 7:
-            roles = _lodash2.default.isArray(userRoles) ? userRoles : [userRoles];
-            _context.next = 10;
-            return _User2.default.create(_extends({}, reqUser, {
-              contacts: [{ kind: 'email', contact: reqUser.email }]
-            }), {
-              include: [{
-                model: _Contact2.default, as: 'contacts'
-              }]
-            });
-
-          case 10:
-            newUser = _context.sent;
-            _context.next = 13;
-            return _Role2.default.addRolesToUser(roles, newUser);
-
-          case 13:
-            return _context.abrupt('return', _User2.default.findById(newUser.id));
-
-          case 14:
-          case 'end':
-            return _context.stop();
-        }
-      }
-    }, _callee, undefined);
-  }));
-
-  return function (_x) {
-    return _ref.apply(this, arguments);
-  };
-}();
-
-_User2.default.facebookQuery = function (fbProfile) {
-  return _User2.default.findOne({
+  const newUser = await User.create({
+    ...reqUser,
+    contacts: [{ kind: 'email', contact: reqUser.email }],
+  }, {
     include: [{
-      model: _UserProvider2.default,
-      as: 'authProviders',
-      required: true,
-      where: {
-        identifier: fbProfile.id
-      }
+      model: Contact, as: 'contacts'
     }]
   });
+
+  await Role.addRolesToUser(roles, newUser);
+
+  return User.findById(newUser.id);
 };
 
-_User2.default.facebookCreate = function () {
-  var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(fbProfile) {
-    var email, roles, user;
-    return regeneratorRuntime.wrap(function _callee2$(_context2) {
-      while (1) {
-        switch (_context2.prev = _context2.next) {
-          case 0:
-            email = fbProfile.email || fbProfile.emails[0];
-            roles = _lodash2.default.isArray(facebookRoles) ? facebookRoles : [facebookRoles];
-            _context2.next = 4;
-            return _User2.default.create({
-              username: email,
-              contacts: [{ kind: 'email', contact: email }]
-            }, {
-              include: [{
-                model: _Contact2.default, as: 'contacts'
-              }]
-            });
+User.facebookQuery = (fbProfile) => User.findOne({
+  include: [{
+    model: UserProvider,
+    as: 'authProviders',
+    required: true,
+    where: {
+      identifier: fbProfile.id
+    }
+  }]
+});
 
-          case 4:
-            user = _context2.sent;
-            _context2.next = 7;
-            return _Role2.default.addRolesToUser(roles, user);
+User.facebookCreate = async (fbProfile) => {
 
-          case 7:
-            _context2.next = 9;
-            return _UserProvider2.default.create({ identifier: fbProfile.id, provider: 'facebook' }).then(function (authProvider) {
-              return user.addAuthProvider(authProvider);
-            });
+  const email = fbProfile.email || fbProfile.emails[0];
 
-          case 9:
-            return _context2.abrupt('return', _User2.default.findById(user.id));
+  const roles = _.isArray(facebookRoles) ? facebookRoles : [facebookRoles];
 
-          case 10:
-          case 'end':
-            return _context2.stop();
-        }
-      }
-    }, _callee2, undefined);
-  }));
+  const user = await User.create({
+    username: email,
+    contacts: [{ kind: 'email', contact: email }],
+  }, {
+    include: [{
+      model: Contact, as: 'contacts'
+    }]
+  });
 
-  return function (_x2) {
-    return _ref2.apply(this, arguments);
-  };
-}();
+  await Role.addRolesToUser(roles, user);
 
-_User2.default.prototype.validatePassword = function (password) {
-  if (!_bcrypt2.default.compareSync(password, this.password)) {
+  await UserProvider.create({ identifier: fbProfile.id, provider: 'facebook' })
+    .then(authProvider => user.addAuthProvider(authProvider));
+
+  return User.findById(user.id);
+};
+
+User.prototype.validatePassword = function (password) {
+  if (!bcrypt.compareSync(password, this.password)) {
     throw PasswordIncorrect();
   }
 };
 
-_User2.default.prototype.toJSON = function () {
-  var user = this.get();
-  return _extends({}, user, {
+User.prototype.toJSON = function () {
+  const user = this.get();
+  return {
+    ...user,
     //TODO: optimize query?
-    roles: user.roles.map(function (_ref3) {
-      var role = _ref3.role;
-      return role;
-    }),
-    emails: user.emails.map(function (_ref4) {
-      var contact = _ref4.contact;
-      return contact;
-    }),
+    roles: user.roles.map(({ role }) => role ),
+    emails: user.emails.map(({ contact }) => contact ),
     password: undefined,
     authProviders: undefined
-  });
+  };
 };

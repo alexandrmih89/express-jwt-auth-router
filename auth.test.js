@@ -1,8 +1,8 @@
-import HttpErrors from 'http-errors';
-import {
+const HttpErrors = require('http-errors');
+const {
   generateAccessToken,
   generateRefreshToken
-} from './auth';
+} = require('./auth');
 
 const userRole = 'user';
 const user = { user: { id: 1, provider: 'password', roles: [ userRole ], }};

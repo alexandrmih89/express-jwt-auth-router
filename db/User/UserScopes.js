@@ -1,34 +1,22 @@
-'use strict';
+const User = require('./User');
+const Role = require('../Role/Role');
+const Contact = require('../Contact/Contact');
 
-var _User = require('./User');
-
-var _User2 = _interopRequireDefault(_User);
-
-var _Role = require('../Role/Role');
-
-var _Role2 = _interopRequireDefault(_Role);
-
-var _Contact = require('../Contact/Contact');
-
-var _Contact2 = _interopRequireDefault(_Contact);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-_User2.default.addScope('defaultScope', {
+User.addScope('defaultScope', {
   include: [{
-    model: _Role2.default,
+    model: Role,
     as: 'roles'
   }, {
-    model: _Contact2.default,
+    model: Contact,
     as: 'contacts'
   }, {
-    model: _Contact2.default,
+    model: Contact,
     as: 'emails',
     where: {
       kind: 'email'
     },
     required: false
-  }]
+  }],
 }, {
   override: true
 });

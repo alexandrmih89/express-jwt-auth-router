@@ -1,28 +1,10 @@
-'use strict';
+const Sequelize = require('sequelize');
+const db = require('../db');
+const Permission = require('../Permission/Permission');
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _sequelize = require('sequelize');
-
-var _sequelize2 = _interopRequireDefault(_sequelize);
-
-var _db = require('../db');
-
-var _db2 = _interopRequireDefault(_db);
-
-var _Permission = require('../Permission/Permission');
-
-var _Permission2 = _interopRequireDefault(_Permission);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-var Role = _db2.default.define('role', {
+const Role = db.define('role', {
   role: {
-    type: _sequelize2.default.STRING,
+    type: Sequelize.STRING,
     primaryKey: true,
     allowNull: false,
     validate: {
@@ -31,24 +13,21 @@ var Role = _db2.default.define('role', {
   }
 }, { paranoid: true });
 
-Role.addRolesToUser = function () {
-  var roles = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-  var user = arguments[1];
-
+Role.addRolesToUser = (roles = [], user) => {
   return Role.findAll({
     where: {
-      role: _defineProperty({}, _sequelize2.default.Op.in, roles)
+      role: {
+        [Sequelize.Op.in]: roles
+      }
     }
-  }).then(function (dbRoles) {
-    if (!dbRoles.length) {
-      dbRoles = Promise.all(roles.map(function (role) {
-        return Role.create({ role: role });
-      }));
-    }
-    return dbRoles;
-  }).then(function (roles) {
-    return user.addRoles(roles);
-  });
+  })
+    .then(dbRoles => {
+      if(!dbRoles.length) {
+        dbRoles = Promise.all(roles.map(role => Role.create({ role })));
+      }
+      return dbRoles;
+    })
+    .then(roles => user.addRoles(roles));
 };
 
-exports.default = Role;
+module.exports = Role;

@@ -1,6 +1,6 @@
-import db from './db';
-import User from './User';
-import './associations';
+const db = require('./db');
+const User = require('./User');
+require('./associations');
 
 describe("Association tests", () => {
 

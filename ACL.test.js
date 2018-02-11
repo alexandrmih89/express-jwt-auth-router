@@ -1,7 +1,7 @@
-import HttpError from 'http-errors';
-import jwt from 'jsonwebtoken';
-import acl from './ACL';
-import './util/dotenv';
+const HttpError = require('http-errors');
+const jwt = require('jsonwebtoken');
+const acl = require('./ACL');
+require('./util/dotenv');
 
 const jwtSecret = process.env.JWT_SECRET;
 
