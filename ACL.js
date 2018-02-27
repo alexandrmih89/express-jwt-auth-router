@@ -2,7 +2,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-const ACL = require('ACL');
+const ACL = require('acl');
 const _ = require('lodash');
 const expressJwt = require('express-jwt');
 const jwt = require('jsonwebtoken');
