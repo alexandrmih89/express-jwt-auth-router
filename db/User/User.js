@@ -17,7 +17,7 @@ const User = db.define('user', {
 }, {
   paranoid: true,
   hooks: {
-    beforeValidate: function (user) {
+    beforeSave: function (user) {
       if(user.password) {
         user.password = bcrypt.hashSync(user.password, 10);
       }
