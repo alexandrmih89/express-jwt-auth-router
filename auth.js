@@ -5,11 +5,14 @@ exports.signOut = exports.signIn = exports.authenticate = exports.applyStrategie
 
 const LocalStrategy = require('passport-local');
 const FacebookTokenStrategy = require('passport-facebook-token');
+const GoogleTokenStrategy = require('passport-google-token');
 const acl = require('./ACL');
 require('./util/dotenv');
 
 const fbId = process.env.FB_ID;
 const fbSecret = process.env.FB_SECRET;
+const googleId = process.env.GOOGLE_ID;
+const googleSecret = process.env.GOOGLE_SECRET;
 
 const localStrategy = (verifyCallback) => new LocalStrategy({
   usernameField : 'username',
@@ -72,12 +75,38 @@ const facebookStrategy = (profileFields, fbUserQuery, fbCreateUser) => {
   );
 };
 
+const googleStrategy = (profileFields, googleUserQuery, googleCreateUser) => {
+  return new GoogleTokenStrategy({
+      clientID: googleId,
+      clientSecret: googleSecret,
+      profileFields,
+      passReqToCallback: true
+    }, (req, googleAccessToken, googleRefreshToken, googleProfile, done) => {
+      googleUserQuery(googleProfile._json, req)
+        .then(user => {
+          if (user) {
+            return user.toJSON();
+          }
+          return googleCreateUser(googleProfile._json, req)
+            .then(user => ({ ...user.toJSON(), firstLogin: true }));
+        })
+        .then(user => {
+          done(null, { ...user, provider: 'google' });
+        })
+        .catch(error => done(error, null));
+    }
+  );
+};
+
 const applyStrategies = exports.applyStrategies = (passport, {
   loginQuery,
   registerQuery,
   fbProfileFields,
   fbUserQuery,
-  fbCreateUser
+  fbCreateUser,
+  googleProfileFields,
+  googleUserQuery,
+  googleCreateUser,
 }) => {
 
   passport.use('local-login', localStrategy(signinStrategy(loginQuery)));
@@ -93,7 +122,17 @@ const applyStrategies = exports.applyStrategies = (passport, {
     'age_range',
     'cover', 'link', 'locale', 'timezone', 'updated_time', 'verified'];
 
+  const gProfileFields = googleProfileFields || [
+    'id',
+    'email',
+    'displayName',
+    'gender',
+    'picture',
+    'age_range',
+    'cover', 'link', 'locale', 'timezone', 'updated_time', 'verified'];
+
   passport.use('facebook-token', facebookStrategy(profileFields, fbUserQuery, fbCreateUser))
+  passport.use('google-token', googleStrategy(gProfileFields, googleUserQuery, googleCreateUser))
 };
 
 const authenticate = exports.authenticate = (passport) => (strategy) => passport.authenticate(strategy, { session: false });

@@ -89,6 +89,40 @@ User.facebookCreate = async (fbProfile) => {
   return User.findById(user.id);
 };
 
+User.googleQuery = (googleProfile) => User.findOne({
+  include: [{
+    model: UserProvider,
+    as: 'authProviders',
+    required: true,
+    where: {
+      identifier: googleProfile.id
+    }
+  }]
+});
+
+User.googleCreate = async (googleProfile) => {
+
+  const email = googleProfile.email || googleProfile.emails[0];
+
+  const roles = _.isArray(googleRoles) ? googleRoles : [googleRoles];
+
+  const user = await User.create({
+    username: email,
+    contacts: [{ kind: 'email', contact: email }],
+  }, {
+    include: [{
+      model: Contact, as: 'contacts'
+    }]
+  });
+
+  await Role.addRolesToUser(roles, user);
+
+  await UserProvider.create({ identifier: googleProfile.id, provider: 'google' })
+    .then(authProvider => user.addAuthProvider(authProvider));
+
+  return User.findById(user.id);
+};
+
 User.prototype.validatePassword = function (password) {
   if (!bcrypt.compareSync(password, this.password)) {
     throw PasswordIncorrect();
