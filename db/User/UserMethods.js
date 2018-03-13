@@ -106,3 +106,7 @@ User.prototype.toJSON = function () {
     authProviders: undefined
   };
 };
+
+User.prototype.generatePassword = function () {
+  return Math.random().toString(36).slice(-8);
+};
