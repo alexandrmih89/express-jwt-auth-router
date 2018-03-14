@@ -5,7 +5,7 @@ exports.signOut = exports.signIn = exports.authenticate = exports.applyStrategie
 
 const LocalStrategy = require('passport-local');
 const FacebookTokenStrategy = require('passport-facebook-token');
-const GoogleTokenStrategy = require('passport-google-token');
+const GoogleTokenStrategy = require('passport-google-token/lib/passport-google-token/strategy.js');
 const acl = require('./ACL');
 require('./util/dotenv');
 
