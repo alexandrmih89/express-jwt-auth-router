@@ -11,6 +11,7 @@ const Op = db.Op;
 
 const userRoles = 'user';
 const facebookRoles = 'user';
+const googleRoles = 'user';
 
 const PasswordIncorrect = () => HttpErrors.Unauthorized("Password Incorrect");
 const UserNotFound = () => HttpErrors.NotFound("User not found");
@@ -104,7 +105,7 @@ User.googleCreate = async (googleProfile) => {
 
   const email = googleProfile.email || googleProfile.emails[0];
 
-  //const roles = _.isArray(googleRoles) ? googleRoles : [googleRoles];
+  const roles = _.isArray(googleRoles) ? googleRoles : [googleRoles];
 
   const user = await User.create({
     username: email,
@@ -115,7 +116,7 @@ User.googleCreate = async (googleProfile) => {
     }]
   });
 
-  //await Role.addRolesToUser(roles, user);
+  await Role.addRolesToUser(roles, user);
 
   await UserProvider.create({ identifier: googleProfile.id, provider: 'google' })
     .then(authProvider => user.addAuthProvider(authProvider));
